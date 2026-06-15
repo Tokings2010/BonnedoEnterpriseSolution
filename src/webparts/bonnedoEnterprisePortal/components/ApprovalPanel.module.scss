@@ -1,0 +1,148 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+@import './variables.scss';
+
+.panelContent {
+  padding: 20px;
+  overflow-y: auto;
+}
+
+.section {
+  margin-bottom: 24px;
+
+  .sectionTitle {
+    font-weight: 600;
+    margin-bottom: 16px;
+    color: $ms-color-neutralPrimary;
+  }
+}
+
+.fieldLabel {
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: $ms-color-neutralPrimary;
+  display: block;
+}
+
+.fieldValue {
+  color: $ms-color-neutralSecondary;
+  margin-bottom: 16px;
+  display: block;
+  word-break: break-word;
+}
+
+.historyContainer {
+  background-color: $ms-color-neutralLighterAlt;
+  padding: 12px;
+  border-radius: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  border: 1px solid $ms-color-neutralLight;
+}
+
+.historyItem {
+  padding: 8px;
+  border-bottom: 1px solid $ms-color-neutralLight;
+  font-size: 12px;
+  margin-bottom: 8px;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  .timestamp {
+    color: $ms-color-neutralTertiary;
+    font-size: 11px;
+    margin-bottom: 4px;
+  }
+
+  .comment {
+    color: $ms-color-neutralSecondary;
+    font-style: italic;
+    margin-top: 4px;
+  }
+}
+
+.actionBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+  margin-right: 8px;
+  text-transform: uppercase;
+}
+
+.approveBadge {
+  background-color: $ms-color-green;
+  color: $ms-color-white;
+}
+
+.rejectBadge {
+  background-color: $ms-color-red;
+  color: $ms-color-white;
+}
+
+.buttonGroup {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  flex-wrap: wrap;
+
+  button {
+    flex: 1;
+    min-width: 120px;
+
+    &:disabled {
+      opacity: 0.6;
+    }
+  }
+}
+
+.commentBox {
+  margin-top: 12px;
+
+  textarea {
+    border: 1px solid $ms-color-neutralLight;
+    border-radius: 4px;
+    padding: 8px;
+    font-family: $ms-font-family-base;
+
+    &:focus {
+      border-color: $ms-color-themePrimary;
+      box-shadow: 0 0 0 1px $ms-color-themePrimary;
+    }
+  }
+}
+
+.loadingContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.messageContainer {
+  margin-bottom: 16px;
+
+  .errorMessage {
+    color: $ms-color-red;
+    background-color: $ms-color-redLighter;
+    padding: 12px;
+    border-radius: 4px;
+    border-left: 4px solid $ms-color-red;
+  }
+
+  .successMessage {
+    color: $ms-color-green;
+    background-color: $ms-color-greenLighter;
+    padding: 12px;
+    border-radius: 4px;
+    border-left: 4px solid $ms-color-green;
+  }
+}
+
+.separator {
+  margin: 16px 0;
+  border-top: 1px solid $ms-color-neutralLight;
+}

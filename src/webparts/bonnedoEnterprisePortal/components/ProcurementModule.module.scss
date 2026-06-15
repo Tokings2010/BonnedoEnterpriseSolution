@@ -1,0 +1,95 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: $ms-color-white;
+}
+
+.header {
+  padding: 16px;
+  border-bottom: 1px solid $ms-color-neutralLight;
+  background-color: $ms-color-white;
+
+  h1 {
+    margin: 0 0 8px 0;
+    font-size: 28px;
+    font-weight: 600;
+    color: $ms-color-neutralPrimary;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: $ms-color-neutralSecondary;
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px;
+
+    h1 {
+      font-size: 20px;
+    }
+
+    p {
+      font-size: 12px;
+    }
+  }
+}
+
+.content {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+
+  :global {
+    .ms-Pivot {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+
+      .ms-Pivot-content {
+        flex: 1;
+        overflow: hidden;
+      }
+
+      .ms-Pivot-link {
+        padding: 12px 16px;
+        font-size: 14px;
+
+        &.is-selected {
+          border-bottom: 3px solid $ms-color-themePrimary;
+          color: $ms-color-themePrimary;
+        }
+      }
+    }
+  }
+}
+
+.commandBar {
+  border-bottom: 1px solid $ms-color-neutralLight;
+  background-color: $ms-color-neutralLighterAlt;
+
+  :global {
+    .ms-CommandBar {
+      padding: 8px 16px;
+    }
+
+    .ms-CommandBar-primaryCommand {
+      margin-right: 12px;
+    }
+  }
+}
+
+@media (max-width: 768px) {
+  .root {
+    height: auto;
+  }
+
+  .content {
+    min-height: 400px;
+  }
+}

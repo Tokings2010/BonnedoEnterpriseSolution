@@ -1,0 +1,82 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "bonnedo-enterprise-platform-client-side-solution",
+    "id": "3006fa1b-600a-4784-986c-76d6b72d344a",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.19.0"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "bonnedo-enterprise-platform description"
+      },
+      "longDescription": {
+        "default": "bonnedo-enterprise-platform description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "bonnedo-enterprise-platform Feature",
+        "description": "The feature that activates elements of the bonnedo-enterprise-platform solution.",
+        "id": "d7d253a0-1d1b-4ebb-a03c-373c08fd094c",
+        "version": "1.0.0.0"
+      }
+    ],
+    "webApiPermissionRequests": [
+      {
+        "resource": "Microsoft Graph",
+        "scope": "Group.ReadWrite.All"
+      },
+      {
+        "resource": "Microsoft Graph",
+        "scope": "Directory.ReadWrite.All"
+      },
+      {
+        "resource": "Microsoft Graph",
+        "scope": "Sites.ReadWrite.All"
+      },
+      {
+        "resource": "Microsoft Graph",
+        "scope": "Tasks.ReadWrite"
+      },
+      {
+        "resource": "Microsoft Graph",
+        "scope": "Channel.Create"
+      },
+      {
+        "resource": "Microsoft Graph",
+        "scope": "Team.Create"
+      },
+      {
+        "resource": "Microsoft Graph",
+        "scope": "User.Read.All"
+      },
+      {
+        "resource": "Microsoft Graph",
+        "scope": "User.ReadBasic.All"
+      },
+      {
+        "resource": "Microsoft Graph",
+        "scope": "Mail.Send"
+      },
+      {
+        "resource": "Microsoft Graph",
+        "scope": "Chat.ReadWrite"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/bonnedo-enterprise-platform.sppkg"
+  }
+}

@@ -1,0 +1,124 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background-color: $ms-color-white;
+}
+
+.filterContainer {
+  padding: 16px;
+  background-color: $ms-color-neutralLighterAlt;
+  border-bottom: 1px solid $ms-color-neutralLight;
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  align-items: flex-end;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    align-items: stretch;
+
+    input,
+    select {
+      width: 100%;
+    }
+  }
+}
+
+.tableContainer {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.cardContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 16px;
+  overflow: auto;
+  flex: 1;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 12px;
+  }
+}
+
+.card {
+  padding: 16px;
+  border: 1px solid $ms-color-neutralLight;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background-color: $ms-color-white;
+
+  &:hover {
+    box-shadow: 0 3.2px 7.2px rgba(0, 0, 0, 0.13), 0 0.6px 1.6px rgba(0, 0, 0, 0.11);
+    transform: translateY(-2px);
+  }
+
+  &:active {
+    background-color: $ms-color-themeLighter;
+  }
+}
+
+.cardField {
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid $ms-color-neutralLighter;
+
+  &:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+  }
+}
+
+.cardLabel {
+  font-weight: 600;
+  color: $ms-color-neutralPrimary;
+  font-size: 12px;
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cardValue {
+  color: $ms-color-neutralSecondary;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+.detailsList {
+  flex: 1;
+  overflow: auto;
+
+  :global {
+    .ms-DetailsList {
+      border: none;
+    }
+
+    .ms-DetailsRow {
+      border-bottom: 1px solid $ms-color-neutralLight;
+
+      &:hover {
+        background-color: $ms-color-neutralLighterAlt;
+        cursor: pointer;
+      }
+
+      &.is-selected {
+        background-color: $ms-color-themeLighter;
+      }
+    }
+
+    .ms-DetailsHeader {
+      background-color: $ms-color-neutralLighter;
+      border-bottom: 2px solid $ms-color-neutralLight;
+    }
+  }
+}

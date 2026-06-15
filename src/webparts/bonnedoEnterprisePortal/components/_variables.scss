@@ -1,0 +1,17 @@
+// Fonts
+$ms-font-family-base: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', 'Helvetica Neue', sans-serif !default;
+
+// Theme Colors (SPFx theme tokens)
+$ms-color-neutralPrimary: "[theme:neutralPrimary, default: #323130]" !default;
+$ms-color-neutralSecondary: "[theme:neutralSecondary, default: #605e5c]" !default;
+$ms-color-neutralTertiary: "[theme:neutralTertiary, default: #a19f9d]" !default;
+$ms-color-neutralLight: "[theme:neutralLight, default: #edebe9]" !default;
+$ms-color-neutralLighterAlt: "[theme:neutralLighterAlt, default: #faf9f8]" !default;
+$ms-color-themePrimary: "[theme:themePrimary, default: #0078d4]" !default;
+
+// Semantic Colors
+$ms-color-red: #d13438 !default;
+$ms-color-redLighter: #fdf3f4 !default;
+$ms-color-green: #107c10 !default;
+$ms-color-greenLighter: #f3fcf3 !default;
+$ms-color-white: #ffffff !default;

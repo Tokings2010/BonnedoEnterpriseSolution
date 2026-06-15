@@ -1,0 +1,27 @@
+Build target: DEBUG
+[06:57:56] Using gulpfile ~\TeamsApps\bonnedo-enterprise-platform\gulpfile.js
+[06:57:56] Starting 'build'...
+[[90m06:57:56[39m] Starting gulp
+[[90m06:57:56[39m] Starting subtask '[36mpre-copy[39m'...
+[[90m06:57:57[39m] Finished subtask '[36mpre-copy[39m' after [35m816 ms[39m
+[[90m06:57:57[39m] Starting subtask '[36mcopy-static-assets[39m'...
+[[90m06:57:57[39m] Starting subtask '[36msass[39m'...
+[[90m06:58:14[39m] Finished subtask '[36msass[39m' after [35m17 s[39m
+[[90m06:58:14[39m] Starting subtask '[36mlint[39m'...
+[[90m06:58:15[39m] [[36mlint[39m] eslint version: 8.7.0
+[[90m06:58:18[39m] Starting subtask '[36mtsc[39m'...
+[[90m06:58:18[39m] [[36mtsc[39m] typescript version: 4.7.4
+[[90m06:58:22[39m] Finished subtask '[36mcopy-static-assets[39m' after [35m25 s[39m
+[[90m06:59:09[39m] Finished subtask '[36mtsc[39m' after [35m52 s[39m
+[[90m06:59:41[39m] [33mWarning - [36mlint[33m - src\webparts\bonnedoEnterprisePortal\components\ProjectForm.tsx(320,41): error @typescript-eslint/no-explicit-any: Unexpected any. Specify a different type.[39m
+[[90m06:59:41[39m] Finished subtask '[36mlint[39m' after [35m1.43 min[39m
+[[90m06:59:41[39m] Starting subtask '[36mpost-copy[39m'...
+[[90m06:59:41[39m] Finished subtask '[36mpost-copy[39m' after [35m1.46 ms[39m
+[06:59:41] Finished 'build' after 1.74 min
+[[90m06:59:41[39m] [35m==================[ Finished ]==================[39m
+Warning - lint - src/webparts/bonnedoEnterprisePortal/components/ProjectForm.tsx(320,41): error @typescript-eslint/no-explicit-any: Unexpected any. Specify a different type.
+[[90m06:59:42[39m] Project bonnedo-enterprise-platform version:[33m0.0.1[39m
+[[90m06:59:42[39m] Build tools version:[33m3.18.1[39m
+[[90m06:59:42[39m] Node version:[33mv18.19.0[39m
+[[90m06:59:42[39m] Total duration:[33m2.15 min[39m
+[[90m06:59:42[39m] Task warnings:[33m1[39m

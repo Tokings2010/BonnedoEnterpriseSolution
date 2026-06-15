@@ -1,0 +1,189 @@
+@import '~@fluentui/react/dist/sass/References.scss';
+
+// Fluent UI DetailsList responsive overrides - Microsoft standard spacing
+.dataGridHost {
+  // Header styling - ensure proper height and spacing from border
+  .ms-DetailsHeader {
+    min-height: 48px !important; // Increased to match cell height for consistency
+    border-bottom: 1px solid $ms-color-neutralLight !important;
+    background-color: $ms-color-neutralLighterAlt;
+  }
+
+  // Header cells - Microsoft standard positioning with proper spacing for descenders
+  .ms-DetailsHeader-cell {
+    padding: 8px 12px 10px 12px !important; // Increased padding: 8px top, 10px bottom for descenders
+    min-height: 48px !important; // Increased height for better spacing
+    display: flex !important;
+    align-items: center !important; // Center alignment for proper text positioning
+    justify-content: center !important;
+    font-weight: 600 !important;
+    color: $ms-color-neutralPrimary !important;
+    border-right: 1px solid $ms-color-neutralLight !important;
+    border-bottom: 2px solid $ms-color-neutralPrimary !important; // Thicker bottom border
+
+    &:last-child {
+      border-right: none !important;
+    }
+  }
+
+  // Data row cells - standard padding for data rows
+  .ms-DetailsRow-cell {
+    padding: 10px 12px !important; // Slightly increased padding for consistency
+    min-height: 48px !important; // Match header height for consistent row spacing
+    display: flex !important;
+    align-items: center !important;
+    border-right: 1px solid $ms-color-neutralLight !important;
+    border-bottom: 1px solid $ms-color-neutralLighter !important;
+
+    &:last-child {
+      border-right: none !important;
+    }
+  }
+
+  // Row styling - subtle borders
+  .ms-DetailsRow {
+    border-bottom: 1px solid $ms-color-neutralLighter !important;
+    min-height: 48px !important; // Match cell height for consistency
+
+    &:hover {
+      background-color: $ms-color-neutralLighterAlt !important;
+    }
+  }
+}
+
+.rowContainer {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 16px;
+  border-bottom: 1px solid $ms-color-neutralLight;
+  transition: background-color 0.2s ease;
+
+  &:hover {
+    background-color: $ms-color-neutralLighterAlt;
+    cursor: pointer;
+  }
+
+  &.selected {
+    background-color: $ms-color-themeLighter;
+  }
+}
+
+.cellContent {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.headerCell {
+  font-weight: 600;
+  color: $ms-color-neutralPrimary;
+  user-select: none;
+
+  &.sortable {
+    cursor: pointer;
+
+    &:hover {
+      background-color: $ms-color-neutralLighter;
+    }
+  }
+
+  &.sorted {
+    background-color: $ms-color-neutralLight;
+    color: $ms-color-themePrimary;
+  }
+}
+
+.paginationWrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px;
+  border-top: 1px solid $ms-color-neutralLight;
+  background-color: $ms-color-neutralLighterAlt;
+}
+
+.paginationInfo {
+  font-size: 12px;
+  color: $ms-color-neutralSecondary;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  color: $ms-color-neutralSecondary;
+
+  .emptyIcon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+  }
+
+  .emptyText {
+    font-size: 14px;
+  }
+}
+
+.loadingState {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+}
+
+// Isolated table wrapper to prevent external style interference
+.dataGridTableWrapper {
+  // Ensure our styles take precedence over global styles
+  .ms-DetailsList {
+    // Force our header and row styling
+    .ms-DetailsHeader {
+      min-height: 48px !important;
+      border-bottom: 1px solid $ms-color-neutralLight !important;
+      background-color: $ms-color-neutralLighterAlt !important;
+    }
+
+    .ms-DetailsHeader-cell {
+      padding: 8px 12px 10px 12px !important;
+      min-height: 48px !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      font-weight: 600 !important;
+      color: $ms-color-neutralPrimary !important;
+      border-right: 1px solid $ms-color-neutralLight !important;
+      border-bottom: 2px solid $ms-color-neutralPrimary !important;
+
+      &:last-child {
+        border-right: none !important;
+      }
+    }
+
+    .ms-DetailsRow-cell {
+      padding: 10px 12px !important;
+      min-height: 48px !important;
+      display: flex !important;
+      align-items: center !important;
+      border-right: 1px solid $ms-color-neutralLight !important;
+      border-bottom: 1px solid $ms-color-neutralLighter !important;
+
+      &:last-child {
+        border-right: none !important;
+      }
+    }
+
+    .ms-DetailsRow {
+      border-bottom: 1px solid $ms-color-neutralLighter !important;
+      min-height: 48px !important;
+
+      &:hover {
+        background-color: $ms-color-neutralLighterAlt !important;
+      }
+    }
+  }
+}
