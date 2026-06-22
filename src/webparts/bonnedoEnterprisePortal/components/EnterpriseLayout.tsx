@@ -18,9 +18,9 @@ import DashboardModule from './DashboardModule';
 import DashboardErrorBoundary from './DashboardErrorBoundary';
 import ExecutiveDashboard from './dashboard/ExecutiveDashboard';
 import ProjectsModule from './ProjectsModule';
-import MasterDataModule from './MasterDataModule';
 import ReportsModule from './ReportsModule';
 import SettingsModule from './SettingsModule';
+import MaterialsManagementModule from './MaterialsManagementModule/MaterialsManagementModule';
 import styles from './EnterpriseLayout.module.scss';
 import { IUserPermissions, ModuleKey } from '../models/PermissionModels';
 
@@ -36,7 +36,7 @@ interface IEnterpriseLayoutProps {
   userPermissions?: IUserPermissions;
 }
 
-type TopMenuKey = 'dashboard' | 'executive' | 'projects' | 'masterdata' | 'procurement' | 'finance' | 'reports' | 'settings';
+type TopMenuKey = 'dashboard' | 'executive' | 'projects' | 'material' | 'procurement' | 'finance' | 'reports' | 'settings';
 
 // Access Denied component
 const AccessDeniedMessage: React.FC = () => {
@@ -192,7 +192,7 @@ const EnterpriseLayout: React.FC<IEnterpriseLayoutProps> = ({
       { name: 'Dashboard', url: '#', icon: 'Home', key: 'dashboard' },
       { name: 'Executive Dashboard', url: '#', icon: 'Chart', key: 'executive' },
       { name: 'Projects', url: '#', icon: 'ProjectCollection', key: 'projects' },
-      { name: 'Master Data', url: '#', icon: 'Database', key: 'masterdata' },
+      { name: 'Material', url: '#', icon: 'Package', key: 'material' },
       { name: 'Procurement', url: '#', icon: 'ShoppingCart', key: 'procurement' },
       { name: 'Finance', url: '#', icon: 'Money', key: 'finance' },
       { name: 'Reports', url: '#', icon: 'BarChartVertical', key: 'reports' },
@@ -227,9 +227,9 @@ const EnterpriseLayout: React.FC<IEnterpriseLayoutProps> = ({
         { text: 'Home', key: 'home', onClick: () => setSelectedTopMenu('dashboard') },
         { text: 'Projects', key: 'projects', isCurrentItem: true },
       ],
-      masterdata: [
+      material: [
         { text: 'Home', key: 'home', onClick: () => setSelectedTopMenu('dashboard') },
-        { text: 'Master Data', key: 'masterdata', isCurrentItem: true },
+        { text: 'Material', key: 'material', isCurrentItem: true },
       ],
       procurement: [
         { text: 'Home', key: 'home', onClick: () => setSelectedTopMenu('dashboard') },
@@ -301,15 +301,16 @@ const EnterpriseLayout: React.FC<IEnterpriseLayoutProps> = ({
             webPartContext={webPartContext}
           />
         );
-      case 'masterdata':
-        if (!hasModuleAccess('masterdata')) {
+      case 'material':
+        if (!hasModuleAccess('material')) {
           return <AccessDeniedMessage />;
         }
         return (
-          <MasterDataModule
+          <MaterialsManagementModule
             spHttpClient={spHttpClient}
             pageContext={pageContext}
             userDisplayName={userDisplayName}
+            userPermissions={userPermissions}
           />
         );
       case 'procurement':

@@ -21,6 +21,28 @@ import { IMaterial } from './MaterialsModule';
 import MaterialForm from './MaterialForm';
 import { SharePointService } from '../services/SharePointService';
 
+interface IHyperlinkFieldValue {
+  Url?: string;
+  Description?: string;
+}
+
+function getHyperlinkUrl(value: unknown): string {
+  if (!value) {
+    return '';
+  }
+
+  if (typeof value === 'string') {
+    return value;
+  }
+
+  if (typeof value === 'object') {
+    const hyperlink = value as IHyperlinkFieldValue;
+    return hyperlink.Url || hyperlink.Description || '';
+  }
+
+  return '';
+}
+
 export interface IMaterialDetailsPanelProps {
   isOpen: boolean;
   material: IMaterial | undefined;
@@ -136,8 +158,13 @@ const MaterialDetailsPanel: React.FC<IMaterialDetailsPanelProps> = ({
           Material_Code: material.Material_Code,
           Material_Name: material.Material_Name,
           Category: material.Category,
+          SubType: material.SubType,
+          Size: material.Size,
           UOM: material.UOM,
           Standard_Cost: material.Standard_Cost,
+          MinStockLevel: material.MinStockLevel,
+          QRCodeURL: getHyperlinkUrl(material.QRCodeURL || material.qrcodeurl),
+          Specification: material.Specification,
           Active: material.Active,
         }}
       />
@@ -204,6 +231,16 @@ const MaterialDetailsPanel: React.FC<IMaterialDetailsPanelProps> = ({
               </div>
 
               <div style={{ marginBottom: '16px' }}>
+                <Label className={classNames.fieldLabel}>Sub Type</Label>
+                <Text className={classNames.fieldValue}>{material.SubType || 'N/A'}</Text>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <Label className={classNames.fieldLabel}>Size</Label>
+                <Text className={classNames.fieldValue}>{material.Size || 'N/A'}</Text>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
                 <Label className={classNames.fieldLabel}>Unit of Measure</Label>
                 <Text className={classNames.fieldValue}>{material.UOM || 'N/A'}</Text>
               </div>
@@ -216,6 +253,23 @@ const MaterialDetailsPanel: React.FC<IMaterialDetailsPanelProps> = ({
                     maximumFractionDigits: 2,
                   }) || '0.00'}
                 </Text>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <Label className={classNames.fieldLabel}>Min Stock Level</Label>
+                <Text className={classNames.fieldValue}>{material.MinStockLevel ?? 'N/A'}</Text>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <Label className={classNames.fieldLabel}>QR Code URL</Label>
+                <Text className={classNames.fieldValue}>
+                  {getHyperlinkUrl(material.QRCodeURL || material.qrcodeurl) || 'Not generated'}
+                </Text>
+              </div>
+
+              <div style={{ marginBottom: '16px' }}>
+                <Label className={classNames.fieldLabel}>Specification</Label>
+                <Text className={classNames.fieldValue}>{material.Specification || 'N/A'}</Text>
               </div>
 
               <div style={{ marginBottom: '16px' }}>

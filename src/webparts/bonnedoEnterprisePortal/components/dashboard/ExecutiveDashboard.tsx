@@ -420,7 +420,7 @@ const ExecutiveDashboard: React.FC<IExecutiveDashboardProps> = ({
                 </div>
             </div>
 
-            {/* Charts Row 4 - Operations & Master Data */}
+            {/* Charts Row 4 - Operations & Materials */}
             <div className={classNames.chartsGrid}>
                 <div className={classNames.chartCard}>
                     <Text variant="large" className={classNames.chartTitle}>

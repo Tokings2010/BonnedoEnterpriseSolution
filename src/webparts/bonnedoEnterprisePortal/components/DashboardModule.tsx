@@ -10,6 +10,7 @@ import {
 } from '@fluentui/react';
 import { SPHttpClient } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
+import { SHAREPOINT_LISTS } from '../constants/SharePointListNames';
 
 // Chart components
 import DashboardBarChart from './charts/DashboardBarChart';
@@ -46,9 +47,14 @@ interface IDashboardMetrics {
   totalExpenses: number;
   totalPaymentAmount: number;
 
-  // Master Data
+  // Materials
   totalMaterials: number;
   totalVendors: number;
+
+  // Material Management / Inventory
+  totalInventoryItems: number;
+  lowStockItems: number;
+  totalMovements: number;
 }
 
 interface IActivityItem {
@@ -56,7 +62,24 @@ interface IActivityItem {
   title: string;
   description: string;
   timestamp: string;
-  type: 'project' | 'procurement' | 'finance' | 'material';
+  type: 'project' | 'procurement' | 'finance' | 'material' | 'inventory';
+}
+
+function computeLowStockCount(inventory: any[], materials: any[]): number {
+  const minMap = new Map<string, number>();
+  materials.forEach((m) => {
+    if (m.Material_Code && m.MinStockLevel > 0) {
+      minMap.set(String(m.Material_Code), Number(m.MinStockLevel));
+    }
+  });
+  return inventory.filter((inv) => {
+    const code = inv.Material_Code || inv.field_1;
+    const minLevel = minMap.get(String(code));
+    if (minLevel === undefined) {
+      return false;
+    }
+    return (inv.Qty_On_Hand || 0) < minLevel;
+  }).length;
 }
 
 const DashboardModule: React.FC<IDashboardModuleProps> = ({
@@ -75,7 +98,8 @@ const DashboardModule: React.FC<IDashboardModuleProps> = ({
     totalPurchaseOrders: 0, pendingPurchaseOrders: 0, totalGoodsReceived: 0,
     totalPaymentRequests: 0, pendingPaymentRequests: 0, totalApprovedPayments: 0,
     totalExpenses: 0, totalPaymentAmount: 0,
-    totalMaterials: 0, totalVendors: 0
+    totalMaterials: 0, totalVendors: 0,
+    totalInventoryItems: 0, lowStockItems: 0, totalMovements: 0,
   });
   const [recentActivities, setRecentActivities] = React.useState<IActivityItem[]>([]);
   const [refreshKey, setRefreshKey] = React.useState(0);
@@ -98,6 +122,8 @@ const DashboardModule: React.FC<IDashboardModuleProps> = ({
         expenses,
         materials,
         vendors,
+        inventory,
+        movements,
       ] = await Promise.all([
         fetchListData(webUrl, 'ENT_Project_Master'),
         fetchListData(webUrl, 'PRC_Material_Request_Register'),
@@ -108,6 +134,8 @@ const DashboardModule: React.FC<IDashboardModuleProps> = ({
         fetchListData(webUrl, 'FIN_Expense_Register'),
         fetchListData(webUrl, 'ENT_Materials_Master'),
         fetchListData(webUrl, 'ENT_Vendors_Master'),
+        fetchListData(webUrl, SHAREPOINT_LISTS.INVENTORY_REGISTER),
+        fetchListData(webUrl, SHAREPOINT_LISTS.INVENTORY_MOVEMENTS_REGISTER),
       ]);
 
       const activeProjects = projects.filter((item: any) =>
@@ -155,6 +183,9 @@ const DashboardModule: React.FC<IDashboardModuleProps> = ({
         totalPaymentAmount,
         totalMaterials: materials.length,
         totalVendors: vendors.length,
+        totalInventoryItems: inventory.length,
+        lowStockItems: computeLowStockCount(inventory, materials),
+        totalMovements: movements.length,
       });
 
       const activities: IActivityItem[] = [];
@@ -192,6 +223,15 @@ const DashboardModule: React.FC<IDashboardModuleProps> = ({
           description: `Status: ${item.Approval_Status || 'Pending'}`,
           timestamp: item.Created || new Date().toISOString(),
           type: 'finance',
+        });
+      });
+      movements.slice(0, 2).forEach((item: any) => {
+        activities.push({
+          id: item.ID + 4000,
+          title: `Movement: ${item.Movement_Type || 'Update'} — ${item.Material_Code || item.field_2 || item.Title}`,
+          description: `Qty: ${item.Qty || 0}${item.From_Location ? ` from ${item.From_Location}` : ''}${item.To_Location || item.To_x0020_Location ? ` to ${item.To_Location || item.To_x0020_Location}` : ''}`,
+          timestamp: item.Created || new Date().toISOString(),
+          type: 'inventory',
         });
       });
 
@@ -267,6 +307,7 @@ const DashboardModule: React.FC<IDashboardModuleProps> = ({
       case 'procurement': return 'ShoppingCart';
       case 'finance': return 'Money';
       case 'material': return 'Package';
+      case 'inventory': return 'Switch';
       default: return 'Document';
     }
   };
@@ -277,6 +318,7 @@ const DashboardModule: React.FC<IDashboardModuleProps> = ({
       case 'procurement': return theme.palette.purple;
       case 'finance': return theme.palette.green;
       case 'material': return theme.palette.orange;
+      case 'inventory': return theme.palette.teal;
       default: return theme.palette.neutralSecondary;
     }
   };
@@ -449,14 +491,6 @@ const DashboardModule: React.FC<IDashboardModuleProps> = ({
       fontSize: '11px',
       fontWeight: 500,
     },
-    pendingBadge: {
-      backgroundColor: theme.palette.orangeLight,
-      color: theme.palette.orange,
-    },
-    successBadge: {
-      backgroundColor: theme.palette.greenLight,
-      color: theme.palette.green,
-    },
     heroCard: {
       padding: '24px',
       background: `linear-gradient(135deg, ${theme.palette.themePrimary} 0%, ${theme.palette.themeDark} 100%)`,
@@ -591,7 +625,7 @@ const DashboardModule: React.FC<IDashboardModuleProps> = ({
             <div className={classNames.metricLabel}>Pending Material Requests</div>
             {(metrics?.pendingMaterialRequests || 0) > 0 && (
               <div className={classNames.metricChange}>
-                <span className={classNames.statusBadge} style={classNames.pendingBadge as any}>
+                <span className={classNames.statusBadge} style={{ backgroundColor: theme.palette.orangeLight, color: theme.palette.orange }}>
                   Needs Attention
                 </span>
               </div>
@@ -623,13 +657,45 @@ const DashboardModule: React.FC<IDashboardModuleProps> = ({
             <div className={classNames.metricLabel}>Pending Payments</div>
           </div>
 
-          {/* Master Data */}
-          <div className={classNames.metricCard} onClick={() => onNavigate?.('masterdata')}>
+          {/* Materials */}
+          <div className={classNames.metricCard} onClick={() => onNavigate?.('material')}>
             <div className={classNames.metricIcon} style={{ color: theme.palette.teal }}>📋</div>
             <div className={classNames.metricValue} style={{ color: theme.palette.teal }}>
               {metrics?.totalMaterials || 0}
             </div>
             <div className={classNames.metricLabel}>Materials</div>
+          </div>
+
+          {/* Material Management / Inventory */}
+          <div className={classNames.metricCard} onClick={() => onNavigate?.('material')}>
+            <div className={classNames.metricIcon} style={{ color: theme.palette.teal }}>📦</div>
+            <div className={classNames.metricValue} style={{ color: theme.palette.teal }}>
+              {metrics?.totalInventoryItems || 0}
+            </div>
+            <div className={classNames.metricLabel}>Inventory Items</div>
+          </div>
+
+          <div className={classNames.metricCard} onClick={() => onNavigate?.('material')}>
+            <div className={classNames.metricIcon} style={{ color: theme.palette.orange }}>⚠️</div>
+            <div className={classNames.metricValue} style={{ color: theme.palette.orange }}>
+              {metrics?.lowStockItems || 0}
+            </div>
+            <div className={classNames.metricLabel}>Low Stock Items</div>
+            {(metrics?.lowStockItems || 0) > 0 && (
+              <div className={classNames.metricChange}>
+                <span className={classNames.statusBadge} style={{ backgroundColor: theme.palette.orangeLight, color: theme.palette.orange }}>
+                  Needs Attention
+                </span>
+              </div>
+            )}
+          </div>
+
+          <div className={classNames.metricCard} onClick={() => onNavigate?.('material')}>
+            <div className={classNames.metricIcon} style={{ color: theme.palette.blue }}>🔄</div>
+            <div className={classNames.metricValue} style={{ color: theme.palette.blue }}>
+              {metrics?.totalMovements || 0}
+            </div>
+            <div className={classNames.metricLabel}>Inventory Movements</div>
           </div>
         </div>
       </div>
@@ -733,9 +799,15 @@ const DashboardModule: React.FC<IDashboardModuleProps> = ({
           </button>
           <button
             className={classNames.quickActionButton}
-            onClick={() => onNavigate?.('masterdata')}
+            onClick={() => onNavigate?.('material')}
           >
-            📋 Master Data
+            📋 Materials
+          </button>
+          <button
+            className={classNames.quickActionButton}
+            onClick={() => onNavigate?.('material')}
+          >
+            📦 Material & Inventory
           </button>
           <button
             className={classNames.quickActionButton}
@@ -761,7 +833,8 @@ const DashboardModule: React.FC<IDashboardModuleProps> = ({
                   if (activity.type === 'project') onNavigate?.('projects');
                   else if (activity.type === 'procurement') onNavigate?.('procurement');
                   else if (activity.type === 'finance') onNavigate?.('finance');
-                  else if (activity.type === 'material') onNavigate?.('procurement');
+                  else if (activity.type === 'material') onNavigate?.('material');
+                  else if (activity.type === 'inventory') onNavigate?.('material');
                 }}
               >
                 <div

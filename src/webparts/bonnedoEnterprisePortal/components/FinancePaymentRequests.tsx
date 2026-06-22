@@ -13,8 +13,8 @@ import {
 } from '@fluentui/react';
 import { SPHttpClient } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
-import DataGrid from './DataGrid';
-import { IDataGridColumn } from './DataGrid';
+import DataGrid from './EnhancedDataGrid';
+import { IDataGridColumn } from './EnhancedDataGrid';
 import { IListItem } from '../services/SharePointService';
 import ApprovalTrackerPanel from './ApprovalTrackerPanel';
 
@@ -245,6 +245,7 @@ const FinancePaymentRequests: React.FC<IFinancePaymentRequestsProps> = ({
                     spHttpClient={spHttpClient}
                     pageContext={pageContext}
                     onRowDoubleClick={handleRowDoubleClick}
+                    showExport
                 />
             </div>
 

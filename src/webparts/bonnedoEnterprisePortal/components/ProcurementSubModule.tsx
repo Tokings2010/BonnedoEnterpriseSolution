@@ -8,18 +8,20 @@ import {
     TextField,
     Label,
     DefaultButton,
+    IDropdownOption,
 } from '@fluentui/react';
 import { SPHttpClient } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
 import { WebPartContext } from '@microsoft/sp-webpart-base';
-import DataGrid from './DataGrid';
-import { IDataGridColumn } from './DataGrid';
+import EnhancedDataGrid from './EnhancedDataGrid';
+import { IDataGridColumn } from './EnhancedDataGrid';
 import MaterialRequestForm from './MaterialRequestModule';
 import PurchaseRequisitionForm from './PurchaseRequisitionModule';
 import PurchaseOrderForm from './PurchaseOrderModule';
 import GoodsReceivedNoteForm from './GoodsReceivedNoteModule';
 import ApprovalTrackerPanel from './ApprovalTrackerPanel';
 import ProcurementDetailsPanel from './ProcurementDetailsPanel';
+import { Tag, formatDate, formatCurrency } from './TagRenderer';
 
 export interface IProcurementSubModuleProps {
     spHttpClient: SPHttpClient;
@@ -173,36 +175,37 @@ const ProcurementSubModule: React.FC<IProcurementSubModuleProps> = ({
         switch (recordType) {
             case 'MR':
                 return [
-                    { key: 'Title', name: 'Request #', fieldName: 'Title', minWidth: 120, isResizable: true },
-                    { key: 'Project_Code', name: 'Project Code', fieldName: 'Project_Code', minWidth: 120, isResizable: true },
-                    { key: 'Material', name: 'Material', fieldName: 'Material', minWidth: 150, isResizable: true },
-                    { key: 'Quantity', name: 'Quantity', fieldName: 'Quantity', minWidth: 100, isResizable: true },
-                    { key: 'Status', name: 'Status', fieldName: 'Status', minWidth: 100, isResizable: true },
+                    { key: 'Title', name: 'Request #', fieldName: 'Title', minWidth: 120, isResizable: true, onRender: (r: any) => <span style={{ fontWeight: 600 }}>{r.Title}</span> },
+                    { key: 'Project_Code', name: 'Project', fieldName: 'Project_Code', minWidth: 120, isResizable: true },
+                    { key: 'Material', name: 'Material', fieldName: 'Material', minWidth: 180, isResizable: true },
+                    { key: 'Quantity', name: 'Qty', fieldName: 'Quantity', minWidth: 80, isResizable: true },
+                    { key: 'Status', name: 'Status', fieldName: 'Status', minWidth: 100, isResizable: true, onRender: (r: any) => <Tag text={r.Status || r.Approval_Status || 'Draft'} /> },
                 ];
             case 'PR':
                 return [
-                    { key: 'Title', name: 'Requisition #', fieldName: 'Title', minWidth: 120, isResizable: true },
-                    { key: 'Project_Code', name: 'Project Code', fieldName: 'Project_Code', minWidth: 120, isResizable: true },
-                    { key: 'Description', name: 'Description', fieldName: 'Description', minWidth: 150, isResizable: true },
-                    { key: 'Quantity', name: 'Quantity', fieldName: 'Quantity', minWidth: 100, isResizable: true },
-                    { key: 'Estimated_Cost', name: 'Est. Cost', fieldName: 'Estimated_Cost', minWidth: 120, isResizable: true },
-                    { key: 'Status', name: 'Status', fieldName: 'Status', minWidth: 100, isResizable: true },
+                    { key: 'Title', name: 'Requisition #', fieldName: 'Title', minWidth: 120, isResizable: true, onRender: (r: any) => <span style={{ fontWeight: 600 }}>{r.Title}</span> },
+                    { key: 'Project_Code', name: 'Project', fieldName: 'Project_Code', minWidth: 120, isResizable: true },
+                    { key: 'Description', name: 'Description', fieldName: 'Description', minWidth: 180, isResizable: true },
+                    { key: 'Quantity', name: 'Qty', fieldName: 'Quantity', minWidth: 80, isResizable: true },
+                    { key: 'Estimated_Cost', name: 'Est. Cost', fieldName: 'Estimated_Cost', minWidth: 100, isResizable: true, onRender: (r: any) => formatCurrency(r.Estimated_Cost) },
+                    { key: 'Status', name: 'Status', fieldName: 'Status', minWidth: 100, isResizable: true, onRender: (r: any) => <Tag text={r.Status || r.Approval_Status || 'Draft'} /> },
                 ];
             case 'PO':
                 return [
-                    { key: 'Title', name: 'PO #', fieldName: 'Title', minWidth: 120, isResizable: true },
-                    { key: 'Vendor', name: 'Vendor', fieldName: 'Vendor', minWidth: 150, isResizable: true },
-                    { key: 'TotalAmount', name: 'Total Amount', fieldName: 'TotalAmount', minWidth: 120, isResizable: true },
-                    { key: 'Delivery_Date', name: 'Delivery Date', fieldName: 'Delivery_Date', minWidth: 120, isResizable: true },
-                    { key: 'Status', name: 'Status', fieldName: 'Status', minWidth: 100, isResizable: true },
+                    { key: 'Title', name: 'PO #', fieldName: 'Title', minWidth: 120, isResizable: true, onRender: (r: any) => <span style={{ fontWeight: 600 }}>{r.Title}</span> },
+                    { key: 'Vendor', name: 'Vendor', fieldName: 'Vendor', minWidth: 160, isResizable: true },
+                    { key: 'TotalAmount', name: 'Amount', fieldName: 'TotalAmount', minWidth: 120, isResizable: true, onRender: (r: any) => formatCurrency(r.TotalAmount || r.Amount) },
+                    { key: 'Delivery_Date', name: 'Delivery', fieldName: 'Delivery_Date', minWidth: 100, isResizable: true, onRender: (r: any) => formatDate(r.Delivery_Date) },
+                    { key: 'Status', name: 'Status', fieldName: 'Status', minWidth: 100, isResizable: true, onRender: (r: any) => <Tag text={r.Status || r.Approval_Status || 'Draft'} /> },
                 ];
             case 'GRN':
                 return [
-                    { key: 'Title', name: 'GRN #', fieldName: 'Title', minWidth: 120, isResizable: true },
-                    { key: 'PO_Number', name: 'PO Number', fieldName: 'PO_Number', minWidth: 120, isResizable: true },
-                    { key: 'Vendor', name: 'Vendor', fieldName: 'Vendor', minWidth: 150, isResizable: true },
-                    { key: 'Quantity_Received', name: 'Qty Received', fieldName: 'Quantity_Received', minWidth: 120, isResizable: true },
-                    { key: 'Received_Date', name: 'Received Date', fieldName: 'Received_Date', minWidth: 120, isResizable: true },
+                    { key: 'Title', name: 'GRN #', fieldName: 'Title', minWidth: 120, isResizable: true, onRender: (r: any) => <span style={{ fontWeight: 600 }}>{r.Title}</span> },
+                    { key: 'PO_Number', name: 'PO #', fieldName: 'PO_Number', minWidth: 120, isResizable: true },
+                    { key: 'Vendor', name: 'Vendor', fieldName: 'Vendor', minWidth: 160, isResizable: true },
+                    { key: 'Quantity_Received', name: 'Qty Recv', fieldName: 'Quantity_Received', minWidth: 90, isResizable: true },
+                    { key: 'Received_Date', name: 'Date', fieldName: 'Received_Date', minWidth: 100, isResizable: true, onRender: (r: any) => formatDate(r.Received_Date) },
+                    { key: 'Status', name: 'Status', fieldName: 'Status', minWidth: 100, isResizable: true, onRender: (r: any) => <Tag text={r.Status || 'Complete'} /> },
                 ];
             default:
                 return [];
@@ -325,7 +328,7 @@ const ProcurementSubModule: React.FC<IProcurementSubModuleProps> = ({
 
             {/* Grid Container */}
             <div className={classNames.gridContainer}>
-                <DataGrid
+                <EnhancedDataGrid
                     key={`procurement-${recordType}-${refreshKey}`}
                     listName={getListName()}
                     columns={getColumns()}
@@ -340,6 +343,7 @@ const ProcurementSubModule: React.FC<IProcurementSubModuleProps> = ({
                     spHttpClient={spHttpClient}
                     pageContext={pageContext}
                     onRowSelected={handleRowClick}
+                    showExport
                 />
             </div>
 

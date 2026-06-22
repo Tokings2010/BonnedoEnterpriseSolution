@@ -15,7 +15,7 @@ import {
 import { SPHttpClient } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
 import { IProject } from './ProjectsModule';
-import ProjectForm from './ProjectForm';
+import ProjectCreatePanel from './ProjectsModule/ProjectCreatePanel';
 import ApprovalTrackerPanel from './ApprovalTrackerPanel';
 
 export interface IProjectDetailsPanelProps {
@@ -114,10 +114,10 @@ const ProjectDetailsPanel: React.FC<IProjectDetailsPanelProps> = ({
   // Show edit form when in edit mode
   if (isEditMode) {
     return (
-      <ProjectForm
+      <ProjectCreatePanel
         isOpen={true}
         onDismiss={handleEditFormDismiss}
-        onSubmitSuccess={handleEditFormSuccess}
+        onProjectUpdated={handleEditFormSuccess}
         spHttpClient={spHttpClient}
         pageContext={pageContext}
         editMode={true}
@@ -127,9 +127,11 @@ const ProjectDetailsPanel: React.FC<IProjectDetailsPanelProps> = ({
           Project_Name: typeof project.Project_Name === 'object' ? '' : project.Project_Name,
           Client_Name: typeof project.Client_Name === 'object' ? '' : project.Client_Name,
           Project_ManagerId: project.Project_ManagerId || (typeof project.Project_Manager === 'object' ? project.Project_Manager?.ID : undefined),
+          Project_Manager: project.Project_Manager,
           Contract_Value: typeof project.Contract_Value === 'number' ? project.Contract_Value : parseFloat(String(project.Contract_Value || '0')),
           Start_Date: typeof project.Start_Date === 'string' ? project.Start_Date : '',
           End_Date: typeof project.End_Date === 'string' ? project.End_Date : '',
+          Project_Status: project.Project_Status,
         }}
       />
     );
@@ -274,6 +276,18 @@ const ProjectDetailsPanel: React.FC<IProjectDetailsPanelProps> = ({
                 </Text>
               </div>
             )}
+          </div>
+
+          <Separator />
+
+          {/* Budget and Schedule */}
+          <div className={classNames.section}>
+            <Text variant="large" block style={{ fontWeight: 600, marginBottom: '16px' }}>
+              Budget & Schedule
+            </Text>
+            <Text className={classNames.fieldValue}>
+              Budget (CBS) and schedule (WBS) files uploaded from the create/edit panel are available in the Project Budget and Project Schedule tabs.
+            </Text>
           </div>
 
           <Separator />

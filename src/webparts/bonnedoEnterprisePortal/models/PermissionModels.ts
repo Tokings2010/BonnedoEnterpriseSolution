@@ -9,6 +9,7 @@ export type ModuleKey =
     | 'executive'
     | 'projects'
     | 'masterdata'
+    | 'material'
     | 'procurement'
     | 'finance'
     | 'reports'
@@ -46,12 +47,21 @@ export type SettingsSubModuleKey =
     | 'user-roles'
     | 'notifications';
 
+// Submodule keys for Material Management
+export type MaterialSubModuleKey =
+    | 'material-master'
+    | 'inventory'
+    | 'movements'
+    | 'warehouse'
+    | 'qr-scan';
+
 export type SubModuleKey =
     | ProcurementSubModuleKey
     | FinanceSubModuleKey
     | MasterDataSubModuleKey
     | ReportsSubModuleKey
-    | SettingsSubModuleKey;
+    | SettingsSubModuleKey
+    | MaterialSubModuleKey;
 
 // Permission levels
 export type PermissionLevel = 'none' | 'view' | 'create' | 'edit' | 'delete' | 'full';
@@ -128,7 +138,7 @@ export const DEFAULT_ROLE_PERMISSIONS: IRolePermission[] = [
             { moduleKey: 'dashboard', permissionLevel: 'full' },
             { moduleKey: 'executive', permissionLevel: 'full' },
             { moduleKey: 'projects', permissionLevel: 'full' },
-            { moduleKey: 'masterdata', permissionLevel: 'full' },
+            { moduleKey: 'material', permissionLevel: 'full' },
             { moduleKey: 'procurement', permissionLevel: 'full' },
             { moduleKey: 'finance', permissionLevel: 'full' },
             { moduleKey: 'reports', permissionLevel: 'full' },
@@ -142,7 +152,7 @@ export const DEFAULT_ROLE_PERMISSIONS: IRolePermission[] = [
             { moduleKey: 'dashboard', permissionLevel: 'view' },
             { moduleKey: 'executive', permissionLevel: 'view' },
             { moduleKey: 'projects', permissionLevel: 'full' },
-            { moduleKey: 'masterdata', permissionLevel: 'view' },
+            { moduleKey: 'material', permissionLevel: 'view' },
             { moduleKey: 'procurement', permissionLevel: 'view' },
             { moduleKey: 'finance', permissionLevel: 'view' },
             { moduleKey: 'reports', permissionLevel: 'view' },
@@ -156,7 +166,7 @@ export const DEFAULT_ROLE_PERMISSIONS: IRolePermission[] = [
             { moduleKey: 'dashboard', permissionLevel: 'view' },
             { moduleKey: 'executive', permissionLevel: 'view' },
             { moduleKey: 'projects', permissionLevel: 'view' },
-            { moduleKey: 'masterdata', permissionLevel: 'view' },
+            { moduleKey: 'material', permissionLevel: 'view' },
             { moduleKey: 'procurement', permissionLevel: 'view' },
             { moduleKey: 'finance', permissionLevel: 'full' },
             { moduleKey: 'reports', permissionLevel: 'view' },
@@ -170,7 +180,7 @@ export const DEFAULT_ROLE_PERMISSIONS: IRolePermission[] = [
             { moduleKey: 'dashboard', permissionLevel: 'view' },
             { moduleKey: 'executive', permissionLevel: 'none' },
             { moduleKey: 'projects', permissionLevel: 'view' },
-            { moduleKey: 'masterdata', permissionLevel: 'view' },
+            { moduleKey: 'material', permissionLevel: 'full' },
             { moduleKey: 'procurement', permissionLevel: 'full' },
             { moduleKey: 'finance', permissionLevel: 'view' },
             { moduleKey: 'reports', permissionLevel: 'view' },
@@ -184,7 +194,7 @@ export const DEFAULT_ROLE_PERMISSIONS: IRolePermission[] = [
             { moduleKey: 'dashboard', permissionLevel: 'view' },
             { moduleKey: 'executive', permissionLevel: 'none' },
             { moduleKey: 'projects', permissionLevel: 'none' },
-            { moduleKey: 'masterdata', permissionLevel: 'none' },
+            { moduleKey: 'material', permissionLevel: 'view' },
             { moduleKey: 'procurement', permissionLevel: 'view' },
             { moduleKey: 'finance', permissionLevel: 'view' },
             { moduleKey: 'reports', permissionLevel: 'none' },
@@ -198,7 +208,7 @@ export const DEFAULT_ROLE_PERMISSIONS: IRolePermission[] = [
             { moduleKey: 'dashboard', permissionLevel: 'view' },
             { moduleKey: 'executive', permissionLevel: 'view' },
             { moduleKey: 'projects', permissionLevel: 'view' },
-            { moduleKey: 'masterdata', permissionLevel: 'view' },
+            { moduleKey: 'material', permissionLevel: 'view' },
             { moduleKey: 'procurement', permissionLevel: 'view' },
             { moduleKey: 'finance', permissionLevel: 'view' },
             { moduleKey: 'reports', permissionLevel: 'view' },
@@ -231,14 +241,17 @@ export const MODULE_DEFINITIONS: IModuleDefinition[] = [
         requiredPermission: 'view',
     },
     {
-        key: 'masterdata',
-        name: 'Master Data',
-        icon: 'Database',
-        description: 'Manage materials, vendors, and other master data',
+        key: 'material',
+        name: 'Material',
+        icon: 'Package',
+        description: 'Material master, inventory, movements, and warehouses',
         requiredPermission: 'view',
         subModules: [
-            { key: 'materials', parentModule: 'masterdata', name: 'Materials', description: 'Manage materials catalog', requiredPermission: 'edit' },
-            { key: 'vendors', parentModule: 'masterdata', name: 'Vendors', description: 'Manage vendor information', requiredPermission: 'edit' },
+            { key: 'material-master', parentModule: 'material', name: 'Material Master', description: 'View and manage material catalog', requiredPermission: 'edit' },
+            { key: 'inventory', parentModule: 'material', name: 'Inventory', description: 'View stock on hand by warehouse', requiredPermission: 'view' },
+            { key: 'movements', parentModule: 'material', name: 'Movements', description: 'View inventory movement history', requiredPermission: 'view' },
+            { key: 'warehouse', parentModule: 'material', name: 'Warehouse', description: 'Manage warehouse locations', requiredPermission: 'edit' },
+            { key: 'qr-scan', parentModule: 'material', name: 'QR Scan & Move', description: 'Scan materials and record movements', requiredPermission: 'create' },
         ],
     },
     {

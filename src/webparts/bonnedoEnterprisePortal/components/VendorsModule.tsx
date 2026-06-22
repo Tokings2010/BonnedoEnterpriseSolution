@@ -5,13 +5,15 @@ import {
     PrimaryButton,
     IconButton,
     Text,
+    IDropdownOption,
 } from '@fluentui/react';
 import { SPHttpClient } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
-import DataGrid from './DataGrid';
-import { IDataGridColumn } from './DataGrid';
+import EnhancedDataGrid from './EnhancedDataGrid';
+import { IDataGridColumn } from './EnhancedDataGrid';
 import VendorForm from './VendorForm';
 import VendorDetailsPanel from './VendorDetailsPanel';
+import { Tag } from './TagRenderer';
 
 export interface IVendorsModuleProps {
     spHttpClient: SPHttpClient;
@@ -85,15 +87,16 @@ const VendorsModule: React.FC<IVendorsModuleProps> = ({
             key: 'Vendor_Name',
             name: 'Vendor Name',
             fieldName: 'Vendor_Name',
-            minWidth: 180,
+            minWidth: 200,
             isResizable: true,
         },
         {
             key: 'Vendor_Category',
             name: 'Category',
             fieldName: 'Vendor_Category',
-            minWidth: 150,
+            minWidth: 120,
             isResizable: true,
+            onRender: (item: IVendor) => <Tag text={item.Vendor_Category} />,
         },
         {
             key: 'Vendor_Status',
@@ -101,26 +104,7 @@ const VendorsModule: React.FC<IVendorsModuleProps> = ({
             fieldName: 'Vendor_Status',
             minWidth: 100,
             isResizable: true,
-            onRender: (item: IVendor) => {
-                let color = '';
-                switch (item.Vendor_Status) {
-                    case 'Active':
-                        color = theme.palette.green;
-                        break;
-                    case 'Inactive':
-                        color = theme.palette.red;
-                        break;
-                    case 'Pending':
-                        color = theme.palette.orange;
-                        break;
-                    case 'Blocked':
-                        color = theme.palette.red;
-                        break;
-                    default:
-                        color = theme.palette.neutralSecondary;
-                }
-                return <span style={{ color }}>{item.Vendor_Status}</span>;
-            },
+            onRender: (item: IVendor) => <Tag text={item.Vendor_Status} />,
         },
     ];
 
@@ -178,7 +162,7 @@ const VendorsModule: React.FC<IVendorsModuleProps> = ({
 
             {/* Grid Container */}
             <div className={classNames.gridContainer}>
-                <DataGrid
+                <EnhancedDataGrid
                     key={`vendors-${refreshKey}`}
                     listName="ENT_Vendors_Master"
                     columns={vendorColumns}
@@ -186,6 +170,7 @@ const VendorsModule: React.FC<IVendorsModuleProps> = ({
                     spHttpClient={spHttpClient}
                     pageContext={pageContext}
                     onRowSelected={handleRowSelected}
+                    showExport
                 />
             </div>
 

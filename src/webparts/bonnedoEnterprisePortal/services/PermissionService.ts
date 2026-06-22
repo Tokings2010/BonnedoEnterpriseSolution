@@ -446,6 +446,21 @@ export class PermissionService {
             modulePermissions = viewerRole?.modulePermissions || [];
         }
 
+        const legacyMasterDataPermission = modulePermissions.find(mp => mp.moduleKey === 'masterdata' && mp.permissionLevel !== 'none');
+        if (legacyMasterDataPermission) {
+            modulePermissions = [
+                ...modulePermissions,
+                ...(modulePermissions.some(mp => mp.moduleKey === 'material') ? [] : [{
+                    moduleKey: 'material' as ModuleKey,
+                    permissionLevel: legacyMasterDataPermission.permissionLevel,
+                }]),
+                ...(modulePermissions.some(mp => mp.moduleKey === 'procurement') ? [] : [{
+                    moduleKey: 'procurement' as ModuleKey,
+                    permissionLevel: legacyMasterDataPermission.permissionLevel,
+                }]),
+            ];
+        }
+
         // Build allowed modules and submodules based on permissions
         const permissionsMap = new Map<ModuleKey, PermissionLevel>();
 

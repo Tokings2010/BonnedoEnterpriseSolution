@@ -6,6 +6,10 @@ import { WebPartContext } from '@microsoft/sp-webpart-base';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type MSGraphClient = any;
 
+interface IGraphGroup {
+    displayName?: string;
+}
+
 // ============================================
 // Project Provisioning Interfaces
 // ============================================
@@ -64,6 +68,7 @@ export class ProjectProvisioningService {
         'Procurement Docs',
         'Finance Docs'
     ];
+    private readonly MAX_UNIQUE_NAME_ATTEMPTS = 10;
 
     constructor(webPartContext: WebPartContext) {
         this.webPartContext = webPartContext;
@@ -124,14 +129,16 @@ export class ProjectProvisioningService {
             onProgress?.({ step: 'init', message: 'Initializing...', progress: 10 });
             graphClient = await this.initializeGraphClient();
 
+            const uniqueProjectName = await this.resolveUniqueProjectName(graphClient, request.projectName);
+
             // STEP 2: Update SharePoint project record - Set Provisioning_Status = "Provisioning"
             onProgress?.({ step: 'status', message: 'Updating provisioning status...', progress: 15 });
             await this.updateProvisioningStatus(request.projectId, 'Provisioning');
 
             // STEP 3: Create Microsoft Team
             onProgress?.({ step: 'team', message: 'Creating Microsoft Team...', progress: 20 });
-            console.log('[ProjectProvisioning] Creating team with name:', `Project - ${request.projectName}`);
-            const teamResponse = await this.createTeam(graphClient, request.projectName);
+            console.log('[ProjectProvisioning] Creating team with name:', `Project - ${uniqueProjectName}`);
+            const teamResponse = await this.createTeam(graphClient, uniqueProjectName);
             const groupId = teamResponse.id;
             console.log('[ProjectProvisioning] Team created with Group ID:', groupId);
 
@@ -154,12 +161,12 @@ export class ProjectProvisioningService {
 
             // STEP 6: Create Project Folder inside General channel document library
             onProgress?.({ step: 'folder', message: 'Creating project folder...', progress: 60 });
-            const projectFolderUrl = await this.createProjectFolder(graphClient, groupId, request.projectName);
+            const projectFolderUrl = await this.createProjectFolder(graphClient, groupId, uniqueProjectName);
             console.log('[ProjectProvisioning] Project folder created:', projectFolderUrl);
 
             // STEP 7: Create Planner Plan
             onProgress?.({ step: 'planner', message: 'Creating planner plan...', progress: 70 });
-            const plannerPlan = await this.createPlannerPlan(graphClient, groupId, request.projectName);
+            const plannerPlan = await this.createPlannerPlan(graphClient, groupId, uniqueProjectName);
             const planId = plannerPlan.id;
             console.log('[ProjectProvisioning] Planner plan created with ID:', planId);
 
@@ -239,6 +246,40 @@ export class ProjectProvisioningService {
             return await response.json();
         } catch {
             return null;
+        }
+    }
+
+    private async resolveUniqueProjectName(graphClient: MSGraphClient, projectName: string): Promise<string> {
+        const baseProjectName = projectName.trim();
+        let candidateProjectName = baseProjectName;
+
+        for (let version = 2; version <= this.MAX_UNIQUE_NAME_ATTEMPTS; version++) {
+            const teamExists = await this.teamExists(graphClient, candidateProjectName);
+
+            if (!teamExists) {
+                return candidateProjectName;
+            }
+
+            candidateProjectName = `${baseProjectName} V${version}`;
+        }
+
+        return `${baseProjectName} V${new Date().getTime()}`;
+    }
+
+    private async teamExists(graphClient: MSGraphClient, projectName: string): Promise<boolean> {
+        const teamDisplayName = `Project - ${projectName}`;
+        const filterQuery = `displayName eq '${teamDisplayName.replace(/'/g, '\'\'')}'`;
+
+        try {
+            const groupsResponse = await graphClient.api('groups')
+                .filter(filterQuery)
+                .select('id,displayName,resourceProvisioningOptions')
+                .get();
+
+            return (groupsResponse.value || []).some((group: IGraphGroup) => group.displayName === teamDisplayName);
+        } catch (error) {
+            console.warn('[ProjectProvisioning] Failed to check existing team name:', error);
+            return false;
         }
     }
 

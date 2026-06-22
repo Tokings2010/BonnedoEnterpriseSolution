@@ -1,5 +1,18 @@
 import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
+import { SHAREPOINT_LISTS } from '../constants/SharePointListNames';
+import {
+  mapInventoryMovementRecord,
+  mapInventoryRecord,
+  mapMaterialMasterRecord,
+  mapWarehouseRecord,
+} from '../utils/materialDataMappers';
+import {
+  IInventoryMovementRecord,
+  IInventoryRecord,
+  IMaterialMasterRecord,
+  IWarehouseRecord,
+} from '../models/DataModels';
 
 export interface IListItem {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -14,10 +27,84 @@ export interface ISharePointListData {
 export class SharePointService {
   private spHttpClient: SPHttpClient;
   private pageContext: PageContext;
+  private listFieldCache: Map<string, string[]> = new Map();
+
+  private readonly fieldNameAliases: Record<string, string[]> = {
+    From_Location: ['From_Location', 'From_x0020_Location'],
+    To_Location: ['To_Location', 'To_x0020_Location'],
+    Project_Code: ['Project_Code', 'Project_x0020_Code'],
+    Material_Code: ['Material_Code', 'Material_x0020_Code'],
+    GRN_Number: ['GRN_Number', 'GRN_x0020_Number'],
+    PO_Number: ['PO_Number', 'PO_x0020_Number'],
+    QRCodeURL: ['QRCodeURL', 'qrcodeurl', 'QR_Code', 'QRCode'],
+  };
 
   constructor(spHttpClient: SPHttpClient, pageContext: PageContext) {
     this.spHttpClient = spHttpClient;
     this.pageContext = pageContext;
+  }
+
+  private async getListFieldInternalNames(listName: string): Promise<string[]> {
+    if (this.listFieldCache.has(listName)) {
+      return this.listFieldCache.get(listName) || [];
+    }
+
+    const webUrl = this.pageContext.web.absoluteUrl;
+    const url = `${webUrl}/_api/web/lists/getByTitle('${listName}')/fields?$select=InternalName,Hidden&$filter=Hidden eq false`;
+
+    const response: SPHttpClientResponse = await this.spHttpClient.get(
+      url,
+      SPHttpClient.configurations.v1
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const data: ISharePointListData = await response.json();
+    const fieldNames = (data.value || []).map((field) => String(field.InternalName || '')).filter(Boolean);
+    this.listFieldCache.set(listName, fieldNames);
+    return fieldNames;
+  }
+
+  private resolveFieldName(fieldNames: string[], fieldName: string): string | undefined {
+    if (fieldNames.includes(fieldName)) {
+      return fieldName;
+    }
+
+    const aliases = this.fieldNameAliases[fieldName] || [];
+    return aliases.find((alias) => fieldNames.includes(alias));
+  }
+
+  private async sanitizeItemDataForList(
+    listName: string,
+    itemData: { [key: string]: any }
+  ): Promise<{ [key: string]: any }> {
+    const fieldNames = await this.getListFieldInternalNames(listName);
+
+    if (fieldNames.length === 0) {
+      return itemData;
+    }
+
+    const sanitized: { [key: string]: any } = {};
+    const removedFields: string[] = [];
+
+    Object.keys(itemData).forEach((fieldName) => {
+      const resolvedFieldName = this.resolveFieldName(fieldNames, fieldName);
+
+      if (!resolvedFieldName) {
+        removedFields.push(fieldName);
+        return;
+      }
+
+      sanitized[resolvedFieldName] = itemData[fieldName];
+    });
+
+    if (removedFields.length > 0) {
+      console.warn(`SharePoint list '${listName}' does not contain these fields: ${removedFields.join(', ')}`);
+    }
+
+    return sanitized;
   }
 
   /**
@@ -300,7 +387,12 @@ export class SharePointService {
       const webUrl = this.pageContext.web.absoluteUrl;
       const url = `${webUrl}/_api/web/lists/getByTitle('${listName}')/items(${itemId})`;
 
-      const body = JSON.stringify(updates);
+      const bodyData = await this.sanitizeItemDataForList(listName, updates);
+      if (Object.keys(bodyData).length === 0) {
+        return;
+      }
+
+      const body = JSON.stringify(bodyData);
 
       const response: SPHttpClientResponse = await this.spHttpClient.post(
         url,
@@ -340,7 +432,12 @@ export class SharePointService {
       const webUrl = this.pageContext.web.absoluteUrl;
       const url = `${webUrl}/_api/web/lists/getByTitle('${listName}')/items`;
 
-      const body = JSON.stringify(itemData);
+      const sanitizedItemData = await this.sanitizeItemDataForList(listName, itemData);
+      if (Object.keys(sanitizedItemData).length === 0) {
+        throw new Error(`No valid fields were found for SharePoint list '${listName}'.`);
+      }
+
+      const body = JSON.stringify(sanitizedItemData);
 
       const response: SPHttpClientResponse = await this.spHttpClient.post(
         url,
@@ -428,7 +525,82 @@ export class SharePointService {
    * Get materials from ENT_Materials_Master list for dropdown
    */
   public async getMaterials(): Promise<IListItem[]> {
-    return this.getListData('ENT_Materials_Master', undefined, 100);
+    return this.getListData(SHAREPOINT_LISTS.MATERIALS_MASTER, undefined, 100);
+  }
+
+  /**
+   * Get material master records for the Material Management module
+   */
+  public async getMaterialMasterRecords(top: number = 500): Promise<IMaterialMasterRecord[]> {
+    const items = await this.getOrderedListData(SHAREPOINT_LISTS.MATERIALS_MASTER, top, 'Material_Code desc');
+    return items.map(mapMaterialMasterRecord);
+  }
+
+  /**
+   * Get warehouses from ENT_Warehouses_Master
+   */
+  public async getWarehouses(top: number = 50): Promise<IWarehouseRecord[]> {
+    const items = await this.getOrderedListData(SHAREPOINT_LISTS.WAREHOUSES_MASTER, top, 'Title asc');
+    return items.map(mapWarehouseRecord);
+  }
+
+  /**
+   * Get inventory records from ENT_Inventory_Register
+   */
+  public async getInventoryRecords(top: number = 1000): Promise<IInventoryRecord[]> {
+    const items = await this.getOrderedListData(SHAREPOINT_LISTS.INVENTORY_REGISTER, top, 'Material_Code asc');
+    return items.map(mapInventoryRecord);
+  }
+
+  /**
+   * Get inventory movement records from ENT_Inventory_Movements_Register
+   */
+  public async getInventoryMovements(top: number = 500): Promise<IInventoryMovementRecord[]> {
+    const items = await this.getOrderedListData(SHAREPOINT_LISTS.INVENTORY_MOVEMENTS_REGISTER, top, 'Created desc');
+    return items.map(mapInventoryMovementRecord);
+  }
+
+  /**
+   * Build SharePoint native new-item form URL for a list
+   */
+  public getListNewFormUrl(listName: string): string {
+    const encodedListName = listName.replace(/ /g, '%20');
+    return `${this.pageContext.web.absoluteUrl}/Lists/${encodedListName}/NewForm.aspx`;
+  }
+
+  /**
+   * Fetch list items with OData $orderby
+   */
+  private async getOrderedListData(
+    listName: string,
+    top: number,
+    orderBy: string,
+    filterQuery?: string
+  ): Promise<IListItem[]> {
+    try {
+      const webUrl = this.pageContext.web.absoluteUrl;
+      let url = `${webUrl}/_api/web/lists/getByTitle('${listName}')/items?$top=${top}&$orderby=${encodeURIComponent(orderBy)}&$select=*`;
+
+      if (filterQuery) {
+        url += `&$filter=${encodeURIComponent(filterQuery)}`;
+      }
+
+      const response: SPHttpClientResponse = await this.spHttpClient.get(
+        url,
+        SPHttpClient.configurations.v1
+      );
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Failed to fetch list data: ${response.statusText} - ${errorText}`);
+      }
+
+      const data: ISharePointListData = await response.json();
+      return data.value;
+    } catch (error) {
+      console.error('Error fetching ordered SharePoint list data:', error);
+      throw error;
+    }
   }
 
   /**

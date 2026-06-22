@@ -6,13 +6,15 @@ import {
     PrimaryButton,
     IconButton,
     TextField,
+    IDropdownOption,
 } from '@fluentui/react';
 import { SPHttpClient } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
-import DataGrid from './DataGrid';
-import { IDataGridColumn } from './DataGrid';
+import EnhancedDataGrid from './EnhancedDataGrid';
+import { IDataGridColumn } from './EnhancedDataGrid';
 import MaterialForm from './MaterialForm';
 import MaterialDetailsPanel from './MaterialDetailsPanel';
+import { Tag, MonoText } from './TagRenderer';
 
 export interface IMaterialsModuleProps {
     spHttpClient: SPHttpClient;
@@ -28,6 +30,12 @@ export interface IMaterial {
     UOM: string;
     Standard_Cost: number;
     Active: boolean;
+    SubType?: string;
+    Size?: string;
+    MinStockLevel?: number;
+    QRCodeURL?: string;
+    qrcodeurl?: string;
+    Specification?: string;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     [key: string]: any;
 }
@@ -52,6 +60,16 @@ const MaterialsModule: React.FC<IMaterialsModuleProps> = ({
         window.addEventListener('resize', handleResize);
         return (): void => {
             window.removeEventListener('resize', handleResize);
+        };
+    }, []);
+
+    React.useEffect(() => {
+        const handleGlobalRefresh = (): void => {
+            setRefreshKey((prev) => prev + 1);
+        };
+        window.addEventListener('refreshData', handleGlobalRefresh);
+        return (): void => {
+            window.removeEventListener('refreshData', handleGlobalRefresh);
         };
     }, []);
 
@@ -144,8 +162,9 @@ const MaterialsModule: React.FC<IMaterialsModuleProps> = ({
             key: 'Material_Code',
             name: 'Material Code',
             fieldName: 'Material_Code',
-            minWidth: 120,
+            minWidth: 140,
             isResizable: true,
+            onRender: (item: IMaterial) => <MonoText>{item.Material_Code}</MonoText>,
         },
         {
             key: 'Material_Name',
@@ -158,38 +177,45 @@ const MaterialsModule: React.FC<IMaterialsModuleProps> = ({
             key: 'Category',
             name: 'Category',
             fieldName: 'Category',
-            minWidth: 150,
+            minWidth: 120,
             isResizable: true,
+            onRender: (item: IMaterial) => <Tag text={item.Category} />,
         },
         {
-            key: 'UOM',
-            name: 'Unit of Measure',
-            fieldName: 'UOM',
+            key: 'SubType',
+            name: 'Sub-Type',
+            fieldName: 'SubType',
             minWidth: 100,
             isResizable: true,
         },
         {
+            key: 'Size',
+            name: 'Size',
+            fieldName: 'Size',
+            minWidth: 80,
+            isResizable: true,
+        },
+        {
+            key: 'UOM',
+            name: 'UOM',
+            fieldName: 'UOM',
+            minWidth: 80,
+            isResizable: true,
+        },
+        {
             key: 'Standard_Cost',
-            name: 'Standard Cost',
+            name: 'Std Cost',
             fieldName: 'Standard_Cost',
-            minWidth: 120,
+            minWidth: 100,
             isResizable: true,
         },
         {
             key: 'Active',
-            name: 'Active',
+            name: 'Status',
             fieldName: 'Active',
-            minWidth: 80,
+            minWidth: 90,
             isResizable: true,
-            onRender: (item: IMaterial) => {
-                return (
-                    <span style={{
-                        color: item.Active ? theme.palette.green : theme.palette.red
-                    }}>
-                        {item.Active ? 'Yes' : 'No'}
-                    </span>
-                );
-            }
+            onRender: (item: IMaterial) => <Tag text={item.Active ? 'Active' : 'Inactive'} />,
         },
     ];
 
@@ -234,27 +260,16 @@ const MaterialsModule: React.FC<IMaterialsModuleProps> = ({
 
             {/* Grid/Card Container */}
             <div className={classNames.gridContainer}>
-        {isMobileView ? (
-          <DataGrid
-            key={`materials-mobile-${refreshKey}`}
+          <EnhancedDataGrid
+            key={`materials-${refreshKey}`}
             listName="ENT_Materials_Master"
             columns={materialColumns}
             pageSize={20}
             spHttpClient={spHttpClient}
             pageContext={pageContext}
             onRowSelected={handleRowSelected}
+            showExport
           />
-        ) : (
-          <DataGrid
-            key={`materials-desktop-${refreshKey}`}
-            listName="ENT_Materials_Master"
-            columns={materialColumns}
-            pageSize={20}
-            spHttpClient={spHttpClient}
-            pageContext={pageContext}
-            onRowSelected={handleRowSelected}
-          />
-        )}
             </div>
 
             {/* Material Form Panel */}

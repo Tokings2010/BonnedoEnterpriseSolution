@@ -67,6 +67,7 @@ export default class BonnedoEnterprisePortalWebPart extends BaseClientSideWebPar
       if (this._permissionService) {
         this._userPermissions = await this._permissionService.getUserPermissions();
         console.log('User permissions loaded:', this._userPermissions);
+        this.render();
       }
     } catch (error) {
       console.error('Error loading user permissions:', error);

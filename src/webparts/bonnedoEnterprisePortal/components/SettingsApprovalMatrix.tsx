@@ -12,8 +12,8 @@ import { IDropdownOption } from '@fluentui/react';
 import { SPHttpClient } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
 import { WebPartContext } from '@microsoft/sp-webpart-base';
-import DataGrid from './DataGrid';
-import { IDataGridColumn } from './DataGrid';
+import EnhancedDataGrid from './EnhancedDataGrid';
+import { IDataGridColumn } from './EnhancedDataGrid';
 import { IListItem } from '../services/SharePointService';
 import ApprovalMatrixForm from './ApprovalMatrixForm';
 import ApprovalMatrixDetailsPanel from './ApprovalMatrixDetailsPanel';
@@ -197,7 +197,7 @@ const SettingsApprovalMatrix: React.FC<ISettingsApprovalMatrixProps> = ({
             )}
 
             <div style={{ height: 'calc(100vh - 280px)' }}>
-                <DataGrid
+                <EnhancedDataGrid
                     key={refreshKey}
                     listName="SYS_Approval_Matrix"
                     columns={approvalMatrixColumns}
@@ -206,6 +206,7 @@ const SettingsApprovalMatrix: React.FC<ISettingsApprovalMatrixProps> = ({
                     pageContext={pageContext}
                     onRowDoubleClick={handleRowDoubleClick}
                     expandQuery="Approver_User"
+                    showExport
                 />
             </div>
 

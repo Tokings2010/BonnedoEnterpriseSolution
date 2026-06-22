@@ -1,7 +1,11 @@
 // Components
 export { default as EnterpriseLayout } from './EnterpriseLayout';
 export { default as DataGrid } from './DataGrid';
+export { default as EnhancedDataGrid } from './EnhancedDataGrid';
 export { default as ApprovalPanel } from './ApprovalPanel';
+export { Tag, MovementTag, ProgressBar, MonoText, formatDate, formatDateTime, formatCurrency, exportToCsv } from './TagRenderer';
+export type { TagVariant, ITagProps, IProgressBarProps } from './TagRenderer';
+export type { IDataGridColumn as IEnhancedDataGridColumn, IDataGridProps as IEnhancedDataGridProps } from './EnhancedDataGrid';
 export { default as FinanceModule } from './FinanceModule';
 export { default as FinancePaymentRequests } from './FinancePaymentRequests';
 export { default as FinanceApprovedPayments } from './FinanceApprovedPayments';
@@ -14,8 +18,11 @@ export { default as ProcurementForm } from './ProcurementForm';
 export { default as ProcurementTable } from './ProcurementTable';
 export { default as ProcurementDetailsPanel } from './ProcurementDetailsPanel';
 export { default as BonnedoEnterprisePortal } from './BonnedoEnterprisePortal';
-export { default as MasterDataModule } from './MasterDataModule';
+export { default as MaterialsManagementModule } from './MaterialsManagementModule/MaterialsManagementModule';
 export { default as MaterialsModule } from './MaterialsModule';
+export { default as WarehousesModule } from './WarehousesModule';
+export { default as WarehouseForm } from './WarehouseForm';
+export { default as WarehouseDetailsPanel } from './WarehouseDetailsPanel';
 export { default as MaterialForm } from './MaterialForm';
 export { default as VendorsModule } from './VendorsModule';
 export { default as VendorForm } from './VendorForm';
@@ -63,12 +70,17 @@ export type {
   IPurchaseOrder,
   IGoodsReceivedNote,
   IProcurementFormData,
+  IMaterialMasterRecord,
+  IWarehouseRecord,
+  IInventoryRecord,
+  IInventoryMovementRecord,
 } from '../models/DataModels';
 
 // Permission Models
 export type {
   ModuleKey,
   SubModuleKey,
+  MaterialSubModuleKey,
   PermissionLevel,
   IModuleDefinition,
   ISubModuleDefinition,
@@ -87,6 +99,8 @@ export {
 
 // Services
 export { SharePointService } from '../services/SharePointService';
+export { SHAREPOINT_LISTS } from '../constants/SharePointListNames';
+export { MATERIAL_LIST_SCHEMAS } from '../provisioning/MaterialListsSchema';
 export { NotificationService } from '../services/NotificationService';
 export { PurchaseOrderPdfService } from '../services/PurchaseOrderPdfService';
 export { QRCodeService } from '../services/QRCodeService';

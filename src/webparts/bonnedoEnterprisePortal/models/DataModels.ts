@@ -140,3 +140,57 @@ export interface IProcurementFormData {
   UnitPrice?: number;
   Notes?: string;
 }
+
+// Material Management Models
+export interface IMaterialMasterRecord extends IListItem {
+  Title: string;
+  Material_Code: string;
+  Material_Name: string;
+  Category: string;
+  SubType?: string;
+  Size?: string;
+  UOM: string;
+  Standard_Cost?: number;
+  MinStockLevel?: number;
+  QRCodeURL?: string;
+  qrcodeurl?: string;
+  MaterialQRCode?: string;
+  Material_QR_Code?: string;
+  Specification?: string;
+  Active: boolean;
+}
+
+export interface IWarehouseRecord extends IListItem {
+  Title: string;
+  WarehouseCode: string;
+  Warehouse_Name: string;
+  Location?: string;
+  Status: string;
+}
+
+export interface IInventoryRecord extends IListItem {
+  Title: string;
+  Material_Code: string;
+  Location: string;
+  Project_Code?: string;
+  Qty_On_Hand: number;
+  QtyReserved?: number;
+  Last_Movement_Date?: string;
+  BinLocation?: string;
+  BatchNumber?: string;
+  Condition?: string;
+  DateReceived?: string;
+  Status?: string;
+}
+
+export interface IInventoryMovementRecord extends IListItem {
+  Title: string;
+  Movement_Type: string;
+  Material_Code: string;
+  Qty: number;
+  From_Location?: string;
+  To_Location?: string;
+  Project_Code?: string;
+  Note?: string;
+  Created?: string;
+}

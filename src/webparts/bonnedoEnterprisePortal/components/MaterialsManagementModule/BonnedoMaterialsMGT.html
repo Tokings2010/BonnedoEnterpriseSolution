@@ -1,0 +1,929 @@
+<!DOCTYPE html>
+<html><head><style id="qw-theme">:root {
+  --color-bg: #faf9fc;
+  --color-text: #1a1a1a;
+  --color-navbar-bg: #f9f9fb;
+  --color-bg-chat-view: #fcfcfd;
+  --color-bg-secondary: #ffffff;
+  --color-bg-tertiary: #f9fafb;
+  --color-bg-hover: #f3f4f6;
+  --color-surface: #f9fafb;
+  --color-surface-hover: #f3f4f6;
+  --color-surface-active: #e5e7eb;
+  --color-border: rgba(0, 0, 0, .12);
+  --color-border-light: rgba(0, 0, 0, .06);
+  --color-border-strong: #d1d5db;
+  --color-primary: #4200db;
+  --color-primary-dark: #35009e;
+  --color-primary-light: #8575ff;
+  --color-primary-bg: #e8e6ff;
+  --color-primary-hover-border: #35009e;
+  --color-nav-icon-active: #4200db;
+  --color-nav-hover-border: #4200db;
+  --color-primary-alpha-3: color-mix(in srgb, #4200db 3%, transparent);
+  --color-primary-alpha-5: color-mix(in srgb, #4200db 5%, transparent);
+  --color-primary-alpha-8: color-mix(in srgb, #4200db 8%, transparent);
+  --color-primary-alpha-12: color-mix(in srgb, #4200db 12%, transparent);
+  --color-primary-alpha-15: color-mix(in srgb, #4200db 15%, transparent);
+  --color-primary-alpha-20: color-mix(in srgb, #4200db 20%, transparent);
+  --color-primary-alpha-25: color-mix(in srgb, #4200db 25%, transparent);
+  --color-primary-alpha-30: color-mix(in srgb, #4200db 30%, transparent);
+  --color-primary-alpha-40: color-mix(in srgb, #4200db 40%, transparent);
+  --color-primary-alpha-50: color-mix(in srgb, #4200db 50%, transparent);
+  --color-primary-alpha-60: color-mix(in srgb, #4200db 60%, transparent);
+  --color-primary-subtle: color-mix(in srgb, #4200db 12%, transparent);
+  --color-primary-border: color-mix(in srgb, #4200db 30%, transparent);
+  --color-focus-ring: color-mix(in srgb, #4200db 50%, transparent);
+  --color-sidebar-hover: color-mix(in srgb, #4200db 12%, transparent);
+  --color-accent: #4200db;
+  --color-accent-foreground: #4200db;
+  --color-accent-dark: #35009e;
+  --color-accent-light: #e8e6ff;
+  --color-accent-inverse: #ffffff;
+  --color-link: #4200db;
+  --color-primary-gradient-end: #e8e6ff;
+  --color-primary-bg-solid: #e8e6ff;
+  --color-user-bubble: #F3F3F7;
+  --color-text-secondary: #5e5e5e;
+  --color-text-tertiary: #656871;
+  --color-text-muted: #9ca3af;
+  --color-text-on-primary: #ffffff;
+  --color-success: #00802f;
+  --color-success-dark: #00471e;
+  --color-success-light: #d9ffd6;
+  --color-success-hover: #005c26;
+  --color-success-bg: #e6f5eb;
+  --color-success-border: #b3d9bf;
+  --color-success-foreground: #00802f;
+  --color-success-dark-foreground: #00471e;
+  --color-success-text: #00471e;
+  --color-error: #db0000;
+  --color-error-dark: #700000;
+  --color-error-light: #ffe0e0;
+  --color-error-hover: #ffe0e0;
+  --color-error-bg: #fceaea;
+  --color-error-border: #f2cccc;
+  --color-error-active-border: #db0000;
+  --color-error-foreground: #db0000;
+  --color-error-dark-foreground: #700000;
+  --color-error-inverse: #ffffff;
+  --color-error-text: #700000;
+  --color-warning: #f2b100;
+  --color-warning-dark: #573a00;
+  --color-warning-light: #fffbbd;
+  --color-warning-hover: #db9200;
+  --color-warning-bg: #fef7e6;
+  --color-warning-border: #f9dfa3;
+  --color-warning-foreground: #f2b100;
+  --color-warning-dark-foreground: #573a00;
+  --color-warning-inverse: #573a00;
+  --color-surface-warning: #fffbbd;
+  --color-text-warning: #573a00;
+  --color-info: #006ce0;
+  --color-info-dark: #002a66;
+  --color-info-light: #d1f1ff;
+  --color-info-hover: #003b8f;
+  --color-info-bg: #ebf3fc;
+  --color-info-border: #b3d1f0;
+  --color-info-foreground: #006ce0;
+  --color-info-dark-foreground: #002a66;
+  --color-info-inverse: #ffffff;
+  --color-overlay: rgba(0, 0, 0, .5);
+  --color-shadow: rgba(0, 0, 0, .08);
+  --color-hover: rgba(0, 0, 0, .05);
+  --color-tooltip-bg: rgba(0, 0, 0, .85);
+  --color-tooltip-text: #ffffff;
+  --color-voice-purple: #8575ff;
+  --color-voice-purple-dark: #4200db;
+  --color-voice-purple-light: #8575ff;
+  --color-voice-red: #db0000;
+  --color-voice-red-dark: #700000;
+  --color-voice-amber: #f2b100;
+  --color-voice-purple-glow: rgba(66, 0, 219, .4);
+  --color-voice-red-glow: rgba(219, 0, 0, .4);
+  --font-sans: "Amazon Ember", "Helvetica Neue", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-mono: "SF Mono", "Monaco", "Menlo", "Consolas", monospace;
+  --text-2xs: .5625rem;
+  --text-xs: .625rem;
+  --text-sm: .6875rem;
+  --text-base: .75rem;
+  --text-md: .8125rem;
+  --text-lg: .875rem;
+  --text-xl: 1rem;
+  --text-2xl: 1.125rem;
+  --text-3xl: 1.25rem;
+  --text-4xl: 1.5rem;
+  --text-5xl: 2rem;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-card: 12px;
+  --radius-lg: 16px;
+  --radius-pill: 8px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, .05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, .08);
+  --color-success-bg-solid: #d9ffd6;
+  --color-error-bg-solid: #ffe0e0;
+  --color-error-border-solid: #ffe0e0;
+  --color-warning-bg-solid: #fffbbd;
+  --color-warning-text: #573a00;
+  --color-info-bg-solid: #d1f1ff;
+  --color-info-bg-solid-alt: #d1f1ff;
+  --color-info-text: #002a66;
+  --color-info-text-alt: #002a66;
+  --color-emerald: #10b981;
+  --color-teal: #4ecdc4;
+  --color-code-bg: #F3F3F7;
+  --color-code-header-bg: #f1f3f5;
+  --color-code-text: #24292e;
+  --color-code-border: #e1e4e8;
+  --color-code-muted: #6a737d;
+  --color-inline-code-bg: #F3F3F7;
+  --color-inline-code-text: #24292e;
+  --color-inline-code-border: #e1e4e8;
+  --color-scrollbar-thumb: #d1d5db;
+  --color-scrollbar-track: transparent;
+  --color-graph-node-text: #333333;
+  --color-graph-node-text-dim: #7F8C8D;
+  --color-graph-edge-default: #95A5A6;
+  --color-graph-edge-cross: #E67E22;
+  --color-graph-edge-text: #666666;
+  --color-graph-edge-stroke: #ffffff;
+  --color-graph-highlight-bg: #FF6B6B;
+  --color-graph-highlight-border: #E74C3C;
+  --color-graph-search-bg: #FFD700;
+  --color-graph-search-border: #FFA500;
+  --color-graph-focus-border: #C0392B;
+  --color-graph-external-border: #95A5A6;
+  --color-graph-cat-file: #3498DB;
+  --color-graph-cat-folder: #7F8C8D;
+  --color-graph-cat-file-aggregate: #2980B9;
+  --color-graph-cat-class: #9B59B6;
+  --color-graph-cat-function: #2ECC71;
+  --color-graph-cat-method: #1ABC9C;
+  --color-graph-cat-variable: #F39C12;
+  --color-graph-cat-import: #D35400;
+  --color-graph-cat-module: #5B6ABF;
+  --color-graph-cat-concept: #E74C3C;
+  --color-graph-cat-person: #FF6B6B;
+  --color-graph-cat-org: #4ECDC4;
+  --color-graph-cat-organization: #4ECDC4;
+  --color-graph-cat-product: #A29BFE;
+  --color-graph-cat-metric: #FD79A8;
+  --color-graph-cat-location: #34495E;
+  --color-graph-cat-date: #E056A0;
+  --color-graph-cat-code: #3498DB;
+  --color-graph-cat-doc: #7F8C8D;
+  --color-graph-cat-url: #00B894;
+  --color-graph-cat-email: #6C5CE7;
+  --color-graph-cat-unknown: #BDC3C7;
+  --color-graph-rel-contains: #BDC3C7;
+  --color-graph-rel-extends: #9B59B6;
+  --color-graph-rel-implements: #3498DB;
+  --color-graph-rel-imports: #E67E22;
+  --color-graph-rel-uses: #2ECC71;
+  --color-graph-rel-calls: #27AE60;
+  --color-graph-rel-references: #F39C12;
+  --color-graph-rel-related-to: #95A5A6;
+  --color-graph-rel-works-on: #E74C3C;
+  --color-graph-rel-owns: #1ABC9C;
+  --color-graph-rel-depends-on: #E67E22;
+  --color-graph-rel-parent-of: #BDC3C7;
+  --qs-content: #ffffff;
+  --qs-main: #f9fafb;
+  --qs-primary-foreground: #1a1a1a;
+  --qs-secondary-foreground: #5e5e5e;
+  --qs-tertiary-foreground: #9ca3af;
+  --qs-placeholder-foreground: #9ca3af;
+  --qs-divider: rgba(0, 0, 0, .12);
+  --qs-default-border: rgba(0, 0, 0, .12);
+  --qs-neutral-soft: #d1d5db;
+  --qs-neutral-gray-50: #f9fafb;
+  --qs-tertiary-background: #f9fafb;
+  --qs-action-hover: rgba(0, 0, 0, .05);
+  --qs-primary-default: #4200db;
+  --qs-primary-dark: #35009e;
+  --qs-primary-light: #e8e6ff;
+  --qs-success-default: #00802f;
+  --qs-error-default: #db0000;
+  --qs-font-sans: "Amazon Ember", "Helvetica Neue", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --react-pdf-text-layer: 1;
+  --highlight-bg-color: rgba(180, 0, 170, 1);
+  --highlight-selected-bg-color: rgba(0, 100, 0, 1);
+  --react-pdf-annotation-layer: 1;
+  --annotation-unfocused-field-background: url("data:image/svg+xml;charset=UTF-8,<svg width='1px' height='1px' xmlns='http://www.w3.org/2000/svg'><rect width='100%' height='100%' style='fill:rgba(0, 54, 255, 0.13);'/></svg>");
+  --input-focus-border-color: Highlight;
+  --input-focus-outline: 1px solid Canvas;
+  --input-unfocused-border-color: transparent;
+  --input-disabled-border-color: transparent;
+  --input-hover-border-color: black;
+  --link-outline: none;
+  color-scheme: light;
+}
+body { background: var(--color-bg); color: var(--color-text); }
+a { color: var(--color-link, var(--color-primary)); }</style>
+<meta charset="UTF-8">
+<title>Bonnedo — Materials Management Module</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root {
+  --sidebar-bg: #1E2532;
+  --sidebar-dark: #181E29;
+  --sidebar-hover: #2A3244;
+  --sidebar-active-bg: rgba(0,184,148,0.08);
+  --sidebar-active-border: #00B894;
+  --sidebar-text: rgba(255,255,255,0.6);
+  --sidebar-text-active: #FFFFFF;
+  --sidebar-width: 220px;
+
+  --teal: #00B894;
+  --teal-dark: #009E80;
+  --teal-light: rgba(0,184,148,0.08);
+  --green: #00B894;
+  --green-light: rgba(0,184,148,0.08);
+  --blue: #4A90D9;
+  --blue-light: rgba(74,144,217,0.08);
+  --orange: #F39C12;
+  --orange-light: rgba(243,156,18,0.08);
+  --red: #E74C3C;
+  --red-light: rgba(231,76,60,0.08);
+  --purple: #9B59B6;
+  --purple-light: rgba(155,89,182,0.08);
+  --yellow: #F1C40F;
+
+  --bg: #F5F6FA;
+  --surface: #FFFFFF;
+  --text: #2C3E50;
+  --text-sec: #7F8C9B;
+  --text-muted: #B0B8C4;
+  --border: #E8ECF0;
+  --border-light: #F0F2F5;
+
+  --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, 'Roboto', sans-serif;
+  --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --radius: 8px;
+  --radius-sm: 6px;
+  --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02);
+  --shadow-md: 0 2px 8px rgba(0,0,0,0.06);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font); background: var(--bg); color: var(--text); display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-width);
+  background: var(--sidebar-bg);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 50;
+}
+.sidebar-brand {
+  padding: 20px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.sidebar-brand-icon {
+  width: 34px; height: 34px;
+  background: var(--teal);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-weight: 700; font-size: 15px;
+}
+.sidebar-brand-name { color: white; font-size: 15px; font-weight: 600; }
+
+.sidebar-nav { padding: 16px 8px; flex: 1; }
+.sidebar-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: rgba(255,255,255,0.3);
+  padding: 12px 14px 6px;
+}
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-radius: 6px;
+  color: var(--sidebar-text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-bottom: 2px;
+  text-decoration: none;
+  border-left: 3px solid transparent;
+}
+.nav-item:hover { background: var(--sidebar-hover); color: var(--sidebar-text-active); }
+.nav-item.active {
+  background: var(--sidebar-active-bg);
+  color: var(--sidebar-text-active);
+  border-left-color: var(--sidebar-active-border);
+  font-weight: 500;
+}
+.nav-item i { width: 18px; text-align: center; font-size: 13px; }
+.nav-item .nav-badge {
+  margin-left: auto;
+  background: var(--red);
+  color: white;
+  font-size: 9px;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 600;
+}
+
+.sidebar-footer {
+  padding: 14px 16px;
+  border-top: 1px solid rgba(255,255,255,0.06);
+  display: flex; align-items: center; gap: 10px;
+}
+.sidebar-avatar {
+  width: 32px; height: 32px; border-radius: 50%;
+  background: var(--teal);
+  display: flex; align-items: center; justify-content: center;
+  color: white; font-size: 11px; font-weight: 600;
+}
+.sidebar-user-name { color: rgba(255,255,255,0.85); font-size: 12px; font-weight: 500; }
+.sidebar-user-role { color: rgba(255,255,255,0.4); font-size: 10px; }
+
+/* MAIN */
+.main { margin-left: var(--sidebar-width); flex: 1; display: flex; flex-direction: column; }
+
+/* TOP BAR */
+.topbar {
+  background: var(--surface);
+  height: 56px;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 40;
+}
+.topbar-title { font-size: 17px; font-weight: 600; }
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 14px; }
+.topbar-search {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 7px 12px;
+  display: flex; align-items: center; gap: 8px;
+  width: 200px;
+}
+.topbar-search input { background: none; border: none; font-size: 12px; outline: none; width: 100%; color: var(--text); }
+.topbar-search input::placeholder { color: var(--text-muted); }
+.topbar-icon {
+  width: 34px; height: 34px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; color: var(--text-sec); transition: background 0.15s;
+  position: relative;
+}
+.topbar-icon:hover { background: var(--bg); }
+.topbar-icon .dot {
+  position: absolute; top: 6px; right: 6px;
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--red); border: 2px solid var(--surface);
+}
+
+/* TAB BAR */
+.tab-bar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  display: flex;
+  gap: 0;
+}
+.tab-item {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--text-sec);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.15s;
+  display: flex; align-items: center; gap: 6px;
+}
+.tab-item:hover { color: var(--text); }
+.tab-item.active { color: var(--teal); border-bottom-color: var(--teal); font-weight: 600; }
+
+/* PAGE */
+.page-body { padding: 24px; flex: 1; }
+.section { display: none; }
+.section.active { display: block; }
+
+/* HEADER */
+.page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; }
+.page-head-title { font-size: 18px; font-weight: 600; }
+.page-head-sub { font-size: 12px; color: var(--text-sec); margin-top: 2px; }
+
+/* STAT CARDS */
+.kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 22px; }
+.kpi-card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  border-left: 4px solid var(--teal);
+  display: flex; align-items: center; gap: 14px;
+}
+.kpi-card.blue { border-left-color: var(--blue); }
+.kpi-card.orange { border-left-color: var(--orange); }
+.kpi-card.red { border-left-color: var(--red); }
+.kpi-icon {
+  width: 40px; height: 40px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px;
+}
+.kpi-value { font-size: 24px; font-weight: 700; }
+.kpi-label { font-size: 11px; color: var(--text-sec); margin-top: 1px; }
+
+/* CARDS */
+.card {
+  background: var(--surface);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.card-head {
+  padding: 14px 18px;
+  display: flex; align-items: center; justify-content: space-between;
+  border-bottom: 1px solid var(--border-light);
+}
+.card-head-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+.card-body { padding: 16px 18px; }
+.card-body-np { padding: 0; }
+
+/* TABLE */
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th {
+  text-align: left; padding: 10px 14px;
+  font-weight: 500; color: var(--text-muted);
+  font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em;
+  background: var(--bg); border-bottom: 1px solid var(--border);
+}
+td { padding: 10px 14px; border-bottom: 1px solid var(--border-light); }
+tr:hover td { background: rgba(0,184,148,0.02); }
+tr { cursor: pointer; }
+
+/* TAGS */
+.tag { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 600; }
+.tag-green { background: var(--green-light); color: var(--teal); }
+.tag-red { background: var(--red-light); color: var(--red); }
+.tag-orange { background: var(--orange-light); color: var(--orange); }
+.tag-blue { background: var(--blue-light); color: var(--blue); }
+.tag-purple { background: var(--purple-light); color: var(--purple); }
+
+/* BUTTONS */
+.btn {
+  padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--font); transition: all 0.15s;
+}
+.btn-teal { background: var(--teal); color: white; }
+.btn-teal:hover { background: var(--teal-dark); }
+.btn-outline { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+.btn-outline:hover { border-color: var(--teal); background: var(--teal-light); }
+.btn-sm { padding: 6px 12px; font-size: 11px; }
+
+/* GRID */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.grid-3-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; }
+
+/* ACTIVITY */
+.act-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border-light); }
+.act-item:last-child { border-bottom: none; }
+.act-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.act-text { font-size: 12px; line-height: 1.4; }
+.act-time { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+
+/* SCANNER */
+.scan-box {
+  background: linear-gradient(135deg, #141920 0%, var(--sidebar-bg) 100%);
+  border-radius: var(--radius);
+  padding: 48px;
+  text-align: center;
+  min-height: 300px;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.scan-frame {
+  width: 180px; height: 180px;
+  border: 2px solid rgba(0,184,148,0.4);
+  border-radius: 14px;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+}
+.scan-frame::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 15%; right: 15%;
+  height: 2px;
+  background: var(--teal);
+  box-shadow: 0 0 12px var(--teal);
+  animation: scanAnim 2s ease-in-out infinite;
+}
+@keyframes scanAnim { 0%,100%{top:0} 50%{top:100%} }
+.scan-hint { color: rgba(255,255,255,0.45); font-size: 12px; margin-top: 16px; }
+
+/* RESULT */
+.result-card { background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); overflow: hidden; }
+.result-top { background: var(--teal); color: white; padding: 12px 16px; display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; }
+.result-body { padding: 16px; }
+.det-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.det-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.03em; }
+.det-val { font-size: 13px; font-weight: 500; margin-top: 1px; }
+
+/* ACTION CARDS */
+.act-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 14px 0; }
+.act-card {
+  border: 1px solid var(--border); border-radius: 8px;
+  padding: 14px 8px; text-align: center;
+  cursor: pointer; transition: all 0.15s; background: var(--surface);
+}
+.act-card:hover { border-color: var(--teal); background: var(--teal-light); }
+.act-card.sel { border-color: var(--teal); background: var(--teal-light); box-shadow: 0 0 0 2px rgba(0,184,148,0.15); }
+.act-card i { font-size: 18px; color: var(--teal); display: block; margin-bottom: 5px; }
+.act-card span { font-size: 11px; font-weight: 500; color: var(--text-sec); }
+
+/* CONFIRM */
+.confirm-msg { text-align: center; padding: 32px; display: none; }
+.confirm-msg.vis { display: block; }
+.confirm-ico { width: 52px; height: 52px; border-radius: 50%; background: var(--green-light); display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; color: var(--teal); font-size: 22px; }
+
+/* FORM PANEL */
+.fpanel { display: none; position: fixed; top: 0; right: 0; bottom: 0; width: 400px; background: var(--surface); box-shadow: -4px 0 16px rgba(0,0,0,0.08); z-index: 200; overflow-y: auto; }
+.fpanel.vis { display: block; }
+.fpanel-head { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--surface); z-index: 1; }
+.fpanel-title { font-size: 15px; font-weight: 600; }
+.fpanel-body { padding: 20px; }
+.fg { margin-bottom: 14px; }
+.fl { font-size: 12px; font-weight: 500; margin-bottom: 4px; display: block; color: var(--text); }
+.fl .req { color: var(--red); }
+.fi { width: 100%; padding: 9px 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 13px; font-family: var(--font); outline: none; transition: border 0.15s; }
+.fi:focus { border-color: var(--teal); box-shadow: 0 0 0 3px rgba(0,184,148,0.06); }
+select.fi { appearance: auto; }
+
+/* PROGRESS */
+.prog { background: var(--border-light); border-radius: 4px; height: 6px; width: 90px; display: inline-block; vertical-align: middle; margin-right: 6px; }
+.prog-fill { height: 6px; border-radius: 4px; }
+
+/* QR LABEL */
+.qr-label { border: 2px dashed var(--border); border-radius: 8px; padding: 12px 14px; display: flex; align-items: center; gap: 12px; max-width: 280px; }
+.qr-box { width: 56px; height: 56px; background: var(--bg); border: 1px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+.qr-info { font-family: var(--mono); font-size: 10px; }
+.qr-info .code { font-weight: 700; font-size: 11px; color: var(--text); }
+.qr-info .desc { color: var(--text-sec); }
+.qr-info .loc { color: var(--text-muted); font-size: 9px; }
+
+/* BIN */
+.bin-grid { display: grid; grid-template-columns: repeat(8, 1fr); gap: 3px; }
+.bin { aspect-ratio: 1; border: 1px solid var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 8px; color: var(--text-muted); cursor: pointer; background: var(--surface); }
+.bin:hover { border-color: var(--teal); }
+.bin.occ { background: var(--teal-light); border-color: var(--teal); color: var(--teal); font-weight: 600; }
+.bin.full { background: var(--orange-light); border-color: var(--orange); color: var(--orange); }
+
+/* FLOW */
+.flow-r { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 10px 0; }
+.flow-s { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 8px 12px; font-size: 11px; text-align: center; }
+.flow-s.hl { border-color: var(--teal); background: var(--teal-light); font-weight: 600; color: var(--teal); }
+.flow-a { color: var(--text-muted); font-size: 11px; }
+
+@media (max-width: 900px) {
+  .sidebar { display: none; }
+  .main { margin-left: 0; }
+  .kpi-row { grid-template-columns: 1fr 1fr; }
+  .grid-2, .grid-3-1 { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-brand">
+    <div class="sidebar-brand-icon">B</div>
+    <div class="sidebar-brand-name">Bonnedo</div>
+  </div>
+
+  <div class="sidebar-nav">
+    <div class="sidebar-label">Main Menu</div>
+    <a class="nav-item"><i class="fa-solid fa-house"></i> Home</a>
+    <a class="nav-item"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+
+    <div class="sidebar-label">Modules</div>
+    <a class="nav-item"><i class="fa-solid fa-cart-shopping"></i> Procurement</a>
+    <a class="nav-item"><i class="fa-solid fa-coins"></i> Finance</a>
+    <a class="nav-item"><i class="fa-solid fa-diagram-project"></i> Projects</a>
+    <a class="nav-item active"><i class="fa-solid fa-cubes-stacked"></i> Materials</a>
+
+    <div class="sidebar-label">System</div>
+    <a class="nav-item"><i class="fa-solid fa-file-lines"></i> Reports</a>
+    <a class="nav-item"><i class="fa-solid fa-gear"></i> Settings</a>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="sidebar-avatar">BU</div>
+    <div>
+      <div class="sidebar-user-name">Bonnedo User</div>
+      <div class="sidebar-user-role">Warehouse Keeper</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-title">Materials Management</div>
+    <div class="topbar-right">
+      <div class="topbar-search">
+        <i class="fa-solid fa-search" style="font-size:12px;color:var(--text-muted);"></i>
+        <input placeholder="Search materials...">
+      </div>
+      <div class="topbar-icon"><i class="fa-solid fa-bell"></i><div class="dot"></div></div>
+      <div class="topbar-icon"><i class="fa-solid fa-circle-user" style="font-size:18px;"></i></div>
+    </div>
+  </div>
+
+  <!-- TAB BAR -->
+  <div class="tab-bar">
+    <div class="tab-item active" onclick="goTab('overview')"><i class="fa-solid fa-grip"></i> Overview</div>
+    <div class="tab-item" onclick="goTab('master')"><i class="fa-solid fa-database"></i> Material Master</div>
+    <div class="tab-item" onclick="goTab('inventory')"><i class="fa-solid fa-boxes-stacked"></i> Inventory</div>
+    <div class="tab-item" onclick="goTab('scan')"><i class="fa-solid fa-qrcode"></i> QR Scan</div>
+    <div class="tab-item" onclick="goTab('movements')"><i class="fa-solid fa-arrows-rotate"></i> Movements</div>
+    <div class="tab-item" onclick="goTab('mrn')"><i class="fa-solid fa-file-circle-plus"></i> MRN</div>
+    <div class="tab-item" onclick="goTab('warehouses')"><i class="fa-solid fa-warehouse"></i> Warehouses</div>
+  </div>
+
+  <!-- PAGE BODY -->
+  <div class="page-body">
+
+    <!-- OVERVIEW -->
+    <div class="section active" id="s-overview">
+      <div class="page-head">
+        <div><div class="page-head-title">Materials Overview</div><div class="page-head-sub">Multi-warehouse tracking with QR code scanning</div></div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-outline" onclick="goTab('scan')"><i class="fa-solid fa-qrcode"></i> Scan QR</button>
+          <button class="btn btn-teal" onclick="showFP()"><i class="fa-solid fa-plus"></i> Register Material</button>
+        </div>
+      </div>
+
+      <div class="kpi-row">
+        <div class="kpi-card">
+          <div class="kpi-icon" style="background:var(--teal-light);color:var(--teal);"><i class="fa-solid fa-cubes"></i></div>
+          <div><div class="kpi-value">2,847</div><div class="kpi-label">Total Items</div></div>
+        </div>
+        <div class="kpi-card blue">
+          <div class="kpi-icon" style="background:var(--blue-light);color:var(--blue);"><i class="fa-solid fa-arrows-rotate"></i></div>
+          <div><div class="kpi-value">156</div><div class="kpi-label">Movements Today</div></div>
+        </div>
+        <div class="kpi-card orange">
+          <div class="kpi-icon" style="background:var(--orange-light);color:var(--orange);"><i class="fa-solid fa-clock"></i></div>
+          <div><div class="kpi-value">12</div><div class="kpi-label">Pending MRNs</div></div>
+        </div>
+        <div class="kpi-card red">
+          <div class="kpi-icon" style="background:var(--red-light);color:var(--red);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <div><div class="kpi-value">3</div><div class="kpi-label">Low Stock Alerts</div></div>
+        </div>
+      </div>
+
+      <div class="grid-3-1">
+        <div class="card">
+          <div class="card-head">
+            <div class="card-head-title"><i class="fa-solid fa-clock-rotate-left" style="color:var(--teal);"></i> Recent Activity</div>
+            <button class="btn btn-sm btn-outline" onclick="goTab('movements')">View All</button>
+          </div>
+          <div class="card-body">
+            <div class="act-item"><div class="act-icon" style="background:var(--blue-light);color:var(--blue);"><i class="fa-solid fa-truck"></i></div><div><div class="act-text"><strong>Transfer In</strong> — 20x 8" Weld Neck Flanges from WH-LOS</div><div class="act-time">14 min ago • Chidi Okafor</div></div></div>
+            <div class="act-item"><div class="act-icon" style="background:var(--orange-light);color:var(--orange);"><i class="fa-solid fa-arrow-right-from-bracket"></i></div><div><div class="act-text"><strong>Issued</strong> — 45x 6" CS Elbows to PRJ-AKK-001</div><div class="act-time">1 hour ago • MRN-2026-0089</div></div></div>
+            <div class="act-item"><div class="act-icon" style="background:var(--green-light);color:var(--teal);"><i class="fa-solid fa-inbox"></i></div><div><div class="act-text"><strong>GRN Received</strong> — 100x M16 Hex Bolts from BSML Nigeria</div><div class="act-time">2 hours ago • Ahmed Ibrahim</div></div></div>
+            <div class="act-item"><div class="act-icon" style="background:var(--teal-light);color:var(--teal);"><i class="fa-solid fa-rotate-left"></i></div><div><div class="act-text"><strong>Returned</strong> — 12x 4" Ball Valves from site (Good)</div><div class="act-time">5 hours ago • Emeka Nnamdi</div></div></div>
+          </div>
+        </div>
+        <div>
+          <div class="card">
+            <div class="card-head"><div class="card-head-title" style="color:var(--red);"><i class="fa-solid fa-triangle-exclamation"></i> Low Stock</div></div>
+            <div class="card-body">
+              <div class="act-item"><div class="act-icon" style="background:var(--red-light);color:var(--red);font-size:10px;"><i class="fa-solid fa-exclamation"></i></div><div><div class="act-text" style="font-weight:500;">4" Gate Valve</div><div class="act-time">3 left (Min: 10)</div></div></div>
+              <div class="act-item"><div class="act-icon" style="background:var(--red-light);color:var(--red);font-size:10px;"><i class="fa-solid fa-exclamation"></i></div><div><div class="act-text" style="font-weight:500;">6" CS Elbow</div><div class="act-time">5 left (Min: 20)</div></div></div>
+              <div class="act-item"><div class="act-icon" style="background:var(--orange-light);color:var(--orange);font-size:10px;"><i class="fa-solid fa-exclamation"></i></div><div><div class="act-text" style="font-weight:500;">Safety Goggles</div><div class="act-time">8 left (Min: 25)</div></div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-head"><div class="card-head-title"><i class="fa-solid fa-truck-fast" style="color:var(--blue);"></i> In Transit</div></div>
+            <div class="card-body">
+              <div class="act-item"><div class="act-icon" style="background:var(--blue-light);color:var(--blue);font-size:10px;"><i class="fa-solid fa-truck"></i></div><div><div class="act-text">PHC → UBE: 8x 10" Gate Valves</div><div class="act-time">ETA: 2 hours</div></div></div>
+              <div class="act-item"><div class="act-icon" style="background:var(--blue-light);color:var(--blue);font-size:10px;"><i class="fa-solid fa-truck"></i></div><div><div class="act-text">LOS → PHC: 30x 6" WN Flanges</div><div class="act-time">Dispatched today</div></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MATERIAL MASTER -->
+    <div class="section" id="s-master">
+      <div class="page-head">
+        <div><div class="page-head-title">Material Master</div><div class="page-head-sub">All registered material codes</div></div>
+        <div style="display:flex;gap:8px;"><button class="btn btn-outline"><i class="fa-solid fa-download"></i> Export</button><button class="btn btn-teal" onclick="showFP()"><i class="fa-solid fa-plus"></i> New Material</button></div>
+      </div>
+      <div class="card"><div class="card-body-np">
+        <table>
+          <tbody><tr><th>Material Code</th><th>Description</th><th>Category</th><th>Size</th><th>UOM</th><th>Spec</th><th>Status</th></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">PIP-CSL-06-0001</td><td>Carbon Steel Line Pipe, Sch 40</td><td><span class="tag tag-blue">Pipe</span></td><td>6"</td><td>JT</td><td>ASTM A106</td><td><span class="tag tag-green">Active</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">VAL-GAT-08-0023</td><td>Gate Valve, API 600, Class 150, RF</td><td><span class="tag tag-red">Valve</span></td><td>8"</td><td>EA</td><td>API 600</td><td><span class="tag tag-green">Active</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">FIT-ELB-06-0012</td><td>90° Elbow, Long Radius, BW, Sch 40</td><td><span class="tag tag-green">Fitting</span></td><td>6"</td><td>EA</td><td>ASTM A234</td><td><span class="tag tag-green">Active</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">RED-CON-08-0003</td><td>Concentric Reducer 8"x6", BW</td><td><span class="tag tag-purple">Reducer</span></td><td>8"x6"</td><td>EA</td><td>ASTM A234</td><td><span class="tag tag-green">Active</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">FLG-WNK-10-0008</td><td>Weld Neck Flange, 150#, RF</td><td><span class="tag tag-orange">Flange</span></td><td>10"</td><td>EA</td><td>ASME B16.5</td><td><span class="tag tag-green">Active</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">TEE-EQL-06-0007</td><td>Equal Tee, BW, Sch 40</td><td><span class="tag tag-green">Tee</span></td><td>6"</td><td>EA</td><td>ASTM A234</td><td><span class="tag tag-green">Active</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">BLT-HEX-00-0156</td><td>Hex Bolt M16x60, Grade 8.8</td><td><span class="tag tag-blue">Bolt</span></td><td>M16</td><td>EA</td><td>ISO 4014</td><td><span class="tag tag-green">Active</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">OEM-PLG-00-0002</td><td>PLC Module, Siemens S7-1500</td><td><span class="tag tag-purple">OEM</span></td><td>N/A</td><td>EA</td><td>—</td><td><span class="tag tag-green">Active</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">CON-WRD-00-0044</td><td>Welding Rod E7018, 3.2mm</td><td><span class="tag tag-orange">Consumable</span></td><td>3.2mm</td><td>KG</td><td>AWS E7018</td><td><span class="tag tag-green">Active</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">PPE-HLM-00-0045</td><td>Safety Helmet, White, Ratchet</td><td><span class="tag tag-green">PPE</span></td><td>N/A</td><td>EA</td><td>EN 397</td><td><span class="tag tag-green">Active</span></td></tr>
+        </tbody></table>
+      </div></div>
+    </div>
+
+    <!-- INVENTORY -->
+    <div class="section" id="s-inventory">
+      <div class="page-head">
+        <div><div class="page-head-title">Inventory Register</div><div class="page-head-sub">Stock levels by warehouse</div></div>
+        <select class="fi" style="width:220px;font-size:12px;"><option>WH-PHC — Port Harcourt Main</option><option>WH-ABJ — Abuja Yard</option><option>WH-UBE — UBETA Site</option><option>WH-AKK — AKK Laydown</option><option>All Warehouses</option></select>
+      </div>
+      <div class="card"><div class="card-body-np">
+        <table>
+          <tbody><tr><th>Code</th><th>Description</th><th>Size</th><th>Bin</th><th>On Hand</th><th>Reserved</th><th>Available</th><th>Project</th><th>Status</th></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">PIP-CSL-06-0001</td><td>CS Line Pipe, Sch 40</td><td>6"</td><td>A3-R2-S4</td><td>124</td><td>30</td><td style="color:var(--teal);font-weight:700;">94</td><td>PRJ-AKK-001</td><td><span class="tag tag-green">OK</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">VAL-GAT-08-0023</td><td>Gate Valve, API 600</td><td>8"</td><td>B1-R1-S2</td><td>16</td><td>8</td><td style="color:var(--teal);font-weight:700;">8</td><td>PRJ-AKK-001</td><td><span class="tag tag-green">OK</span></td></tr>
+          <tr style="background:var(--red-light);"><td style="font-family:var(--mono);font-weight:600;">VAL-GAT-04-0045</td><td>Gate Valve, API 600</td><td>4"</td><td>B1-R2-S1</td><td>3</td><td>0</td><td style="color:var(--red);font-weight:700;">3</td><td>—</td><td><span class="tag tag-red">LOW</span></td></tr>
+          <tr style="background:var(--red-light);"><td style="font-family:var(--mono);font-weight:600;">FIT-ELB-06-0012</td><td>90° Elbow, LR, BW</td><td>6"</td><td>C2-R1-S3</td><td>5</td><td>0</td><td style="color:var(--red);font-weight:700;">5</td><td>PRJ-UBE-003</td><td><span class="tag tag-red">LOW</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">FLG-WNK-10-0008</td><td>Weld Neck Flange, 150#</td><td>10"</td><td>D1-R3-S2</td><td>42</td><td>12</td><td style="color:var(--teal);font-weight:700;">30</td><td>PRJ-AKK-001</td><td><span class="tag tag-green">OK</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">BLT-HEX-00-0156</td><td>Hex Bolt M16x60</td><td>M16</td><td>E1-R1-S1</td><td>2,400</td><td>200</td><td style="color:var(--teal);font-weight:700;">2,200</td><td>—</td><td><span class="tag tag-green">OK</span></td></tr>
+        </tbody></table>
+      </div></div>
+    </div>
+
+    <!-- QR SCAN -->
+    <div class="section" id="s-scan">
+      <div class="page-head"><div><div class="page-head-title">QR Scan &amp; Move</div><div class="page-head-sub">Scan material QR code to record movements</div></div></div>
+      <div class="grid-2">
+        <div>
+          <div class="scan-box" id="scanView">
+            <div class="scan-frame"><i class="fa-solid fa-qrcode" style="font-size:40px;color:rgba(255,255,255,0.12);"></i></div>
+            <div class="scan-hint">Position QR code within frame</div>
+            <button class="btn btn-teal" style="margin-top:20px;" onclick="doScan()"><i class="fa-solid fa-camera"></i> Simulate Scan</button>
+          </div>
+          <div class="card" style="margin-top:12px;"><div class="card-body" style="padding:12px 16px;">
+            <div style="font-size:12px;font-weight:600;margin-bottom:6px;">Workflow</div>
+            <div class="flow-r"><div class="flow-s hl">Scan QR</div><span class="flow-a">→</span><div class="flow-s">View Item</div><span class="flow-a">→</span><div class="flow-s">Action</div><span class="flow-a">→</span><div class="flow-s">Confirm</div><span class="flow-a">→</span><div class="flow-s">Updated</div></div>
+          </div></div>
+        </div>
+        <div>
+          <div class="result-card" id="resPanel">
+            <div class="result-top"><i class="fa-solid fa-circle-check"></i> Material Identified</div>
+            <div class="result-body">
+              <div style="font-size:15px;font-weight:700;font-family:var(--mono);">PIP-CSL-06-0001</div>
+              <div style="font-size:12px;color:var(--text-sec);margin-bottom:14px;">6" Carbon Steel Line Pipe, Sch 40, API 5L Gr.B</div>
+              <div class="det-grid">
+                <div><div class="det-label">Category</div><div class="det-val"><span class="tag tag-blue">Pipe</span></div></div>
+                <div><div class="det-label">Size</div><div class="det-val">6" (DN150)</div></div>
+                <div><div class="det-label">Warehouse</div><div class="det-val">WH-PHC</div></div>
+                <div><div class="det-label">Bin</div><div class="det-val">A3-R2-S4</div></div>
+                <div><div class="det-label">Available</div><div class="det-val" style="color:var(--teal);font-weight:700;">94 joints</div></div>
+                <div><div class="det-label">Project</div><div class="det-val">PRJ-AKK-001</div></div>
+              </div>
+              <div style="font-size:10px;font-weight:600;margin:14px 0 8px;color:var(--text-muted);text-transform:uppercase;letter-spacing:0.05em;">Select Action</div>
+              <div class="act-grid">
+                <div class="act-card" onclick="selA(this)"><i class="fa-solid fa-truck"></i><span>Transfer</span></div>
+                <div class="act-card" onclick="selA(this)"><i class="fa-solid fa-arrow-right-from-bracket"></i><span>Issue</span></div>
+                <div class="act-card" onclick="selA(this)"><i class="fa-solid fa-rotate-left"></i><span>Return</span></div>
+                <div class="act-card" onclick="selA(this)"><i class="fa-solid fa-inbox"></i><span>Receive</span></div>
+                <div class="act-card" onclick="selA(this)"><i class="fa-solid fa-clipboard-check"></i><span>Verify</span></div>
+                <div class="act-card" onclick="selA(this)"><i class="fa-solid fa-ban"></i><span>Scrap</span></div>
+              </div>
+              <div style="display:flex;gap:8px;margin-top:12px;">
+                <select class="fi" style="width:160px;font-size:12px;"><option>WH-UBE — UBETA</option><option>WH-ABJ</option><option>WH-AKK</option></select>
+                <input class="fi" style="width:65px;font-size:12px;" placeholder="Qty" value="10">
+                <button class="btn btn-teal" onclick="cfmMove()"><i class="fa-solid fa-check"></i> Confirm</button>
+              </div>
+            </div>
+          </div>
+          <div class="confirm-msg" id="cfmBox">
+            <div class="confirm-ico"><i class="fa-solid fa-check"></i></div>
+            <div style="font-size:15px;font-weight:600;">Movement Recorded</div>
+            <div style="font-size:12px;color:var(--text-sec);margin-top:4px;">PIP-CSL-06-0001 — Transfer to WH-UBE (10 joints)</div>
+            <div style="font-size:10px;color:var(--text-muted);margin-top:6px;">MOV-2026-04892 • Lists updated</div>
+            <button class="btn btn-outline" style="margin-top:14px;" onclick="rstScan()"><i class="fa-solid fa-qrcode"></i> Scan Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MOVEMENTS -->
+    <div class="section" id="s-movements">
+      <div class="page-head"><div><div class="page-head-title">Material Movements</div><div class="page-head-sub">Scan-triggered movement history</div></div><button class="btn btn-outline"><i class="fa-solid fa-download"></i> Export</button></div>
+      <div class="card"><div class="card-body-np">
+        <table>
+          <tbody><tr><th>ID</th><th>Type</th><th>Material</th><th>Qty</th><th>From</th><th>To</th><th>By</th><th>Timestamp</th><th>Status</th></tr>
+          <tr><td style="font-family:var(--mono);">MOV-04891</td><td><span class="tag tag-blue">Transfer In</span></td><td>FLG-WNK-08-0015</td><td>20</td><td>WH-LOS</td><td>WH-PHC</td><td>C. Okafor</td><td>04 Jun, 10:20</td><td><span class="tag tag-green">Complete</span></td></tr>
+          <tr><td style="font-family:var(--mono);">MOV-04890</td><td><span class="tag tag-orange">Issue</span></td><td>FIT-ELB-06-0012</td><td>45</td><td>WH-PHC</td><td>PRJ-AKK</td><td>K. Bello</td><td>04 Jun, 09:15</td><td><span class="tag tag-green">Complete</span></td></tr>
+          <tr><td style="font-family:var(--mono);">MOV-04889</td><td><span class="tag tag-green">GRN</span></td><td>BLT-HEX-00-0156</td><td>100</td><td>BSML Nig.</td><td>WH-PHC</td><td>A. Ibrahim</td><td>04 Jun, 08:30</td><td><span class="tag tag-green">Complete</span></td></tr>
+          <tr><td style="font-family:var(--mono);">MOV-04888</td><td><span class="tag tag-blue">Transfer Out</span></td><td>VAL-GAT-10-0019</td><td>8</td><td>WH-PHC</td><td>WH-UBE</td><td>C. Okafor</td><td>04 Jun, 07:45</td><td><span class="tag tag-orange">In Transit</span></td></tr>
+          <tr><td style="font-family:var(--mono);">MOV-04887</td><td><span class="tag tag-green">Return</span></td><td>VAL-BLL-04-0031</td><td>12</td><td>UBETA Site</td><td>WH-PHC</td><td>E. Nnamdi</td><td>04 Jun, 05:20</td><td><span class="tag tag-green">Complete</span></td></tr>
+        </tbody></table>
+      </div></div>
+    </div>
+
+    <!-- MRN -->
+    <div class="section" id="s-mrn">
+      <div class="page-head"><div><div class="page-head-title">Material Requests (MRN)</div><div class="page-head-sub">Request, approve, and issue</div></div><button class="btn btn-teal"><i class="fa-solid fa-plus"></i> New MRN</button></div>
+      <div class="card"><div class="card-body-np">
+        <table>
+          <tbody><tr><th>MRN No.</th><th>Project</th><th>Requested By</th><th>Items</th><th>Required</th><th>Status</th></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">MRN-2026-0092</td><td>PRJ-AKK-001</td><td>Engr. Adamu</td><td>8 items</td><td>06 Jun</td><td><span class="tag tag-orange">Pending</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">MRN-2026-0091</td><td>PRJ-UBE-003</td><td>Engr. Obi</td><td>5 items</td><td>05 Jun</td><td><span class="tag tag-blue">Approved</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">MRN-2026-0090</td><td>PRJ-AKK-001</td><td>Engr. Musa</td><td>12 items</td><td>04 Jun</td><td><span class="tag tag-blue">Approved</span></td></tr>
+          <tr><td style="font-family:var(--mono);font-weight:600;">MRN-2026-0089</td><td>PRJ-AKK-001</td><td>Engr. Adamu</td><td>3 items</td><td>04 Jun</td><td><span class="tag tag-green">Issued</span></td></tr>
+        </tbody></table>
+      </div></div>
+    </div>
+
+    <!-- WAREHOUSES -->
+    <div class="section" id="s-warehouses">
+      <div class="page-head"><div><div class="page-head-title">Warehouses</div><div class="page-head-sub">Multi-site warehouse management</div></div></div>
+      <div class="grid-2">
+        <div class="card"><div class="card-head"><div class="card-head-title">All Warehouses</div></div><div class="card-body-np">
+          <table>
+            <tbody><tr><th>Code</th><th>Name</th><th>Type</th><th>Utilization</th></tr>
+            <tr><td style="font-family:var(--mono);font-weight:600;">WH-PHC</td><td>Port Harcourt Main</td><td><span class="tag tag-blue">Main</span></td><td><div class="prog"><div class="prog-fill" style="width:57%;background:var(--teal);"></div></div>57%</td></tr>
+            <tr><td style="font-family:var(--mono);font-weight:600;">WH-ABJ</td><td>Abuja Yard</td><td><span class="tag tag-blue">Main</span></td><td><div class="prog"><div class="prog-fill" style="width:34%;background:var(--teal);"></div></div>34%</td></tr>
+            <tr><td style="font-family:var(--mono);font-weight:600;">WH-UBE</td><td>UBETA Site Store</td><td><span class="tag tag-orange">Site</span></td><td><div class="prog"><div class="prog-fill" style="width:82%;background:var(--orange);"></div></div>82%</td></tr>
+            <tr><td style="font-family:var(--mono);font-weight:600;">WH-AKK</td><td>AKK Laydown</td><td><span class="tag tag-green">Laydown</span></td><td><div class="prog"><div class="prog-fill" style="width:45%;background:var(--teal);"></div></div>45%</td></tr>
+            <tr><td style="font-family:var(--mono);font-weight:600;">WH-LOS</td><td>Lagos Transit</td><td><span class="tag tag-purple">Transit</span></td><td><div class="prog"><div class="prog-fill" style="width:21%;background:var(--teal);"></div></div>21%</td></tr>
+          </tbody></table>
+        </div></div>
+        <div>
+          <div class="card"><div class="card-head"><div class="card-head-title">WH-PHC Bin Map</div></div><div class="card-body">
+            <div class="bin-grid">
+              <div class="bin occ">A1-1</div><div class="bin occ">A1-2</div><div class="bin full">A1-3</div><div class="bin occ">A1-4</div><div class="bin">A1-5</div><div class="bin">A1-6</div><div class="bin occ">A1-7</div><div class="bin">A1-8</div>
+              <div class="bin full">A2-1</div><div class="bin occ">A2-2</div><div class="bin occ">A2-3</div><div class="bin">A2-4</div><div class="bin occ">A2-5</div><div class="bin">A2-6</div><div class="bin occ">A2-7</div><div class="bin occ">A2-8</div>
+              <div class="bin occ">A3-1</div><div class="bin full">A3-2</div><div class="bin occ">A3-3</div><div class="bin occ">A3-4</div><div class="bin">A3-5</div><div class="bin occ">A3-6</div><div class="bin">A3-7</div><div class="bin occ">A3-8</div>
+            </div>
+          </div></div>
+          <div class="card"><div class="card-head"><div class="card-head-title">QR Label</div></div><div class="card-body">
+            <div class="qr-label"><div class="qr-box"><i class="fa-solid fa-qrcode" style="font-size:26px;color:var(--text-muted);"></i></div><div class="qr-info"><div class="code">PIP-CSL-06-0001</div><div class="desc">6" CS Line Pipe</div><div class="loc">B2026-0034 | WH-PHC | A3-R2-S4</div></div></div>
+            <div style="margin-top:10px;"><button class="btn btn-sm btn-outline"><i class="fa-solid fa-print"></i> Print</button><button class="btn btn-sm btn-outline" style="margin-left:6px;"><i class="fa-solid fa-copy"></i> Batch</button></div>
+          </div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FORM PANEL -->
+<div class="fpanel" id="fpanel">
+  <div class="fpanel-head"><div class="fpanel-title">Register New Material</div><button style="background:none;border:none;font-size:16px;cursor:pointer;color:var(--text-muted);" onclick="hideFP()">✕</button></div>
+  <div class="fpanel-body">
+    <div class="fg"><label class="fl">Category <span class="req">*</span></label><select class="fi"><option>— Select —</option><option>PIP — Pipes</option><option>VAL — Valves</option><option>FIT — Fittings</option><option>RED — Reducers</option><option>FLG — Flanges</option><option>TEE — Tees</option><option>BLT — Bolts</option><option>NUT — Nuts</option><option>OEM — OEM H/W &amp; S/W</option><option>CON — Consumables</option><option>PPE — PPE</option></select></div>
+    <div class="fg"><label class="fl">Sub-Type <span class="req">*</span></label><select class="fi"><option>Carbon Steel Line</option><option>Stainless Steel</option><option>GRE</option></select></div>
+    <div class="fg"><label class="fl">Size <span class="req">*</span></label><select class="fi"><option>2"</option><option>3"</option><option>4"</option><option>6"</option><option>8"</option><option>10"</option><option>12"</option><option>N/A</option></select></div>
+    <div class="fg"><label class="fl">Description <span class="req">*</span></label><input class="fi" placeholder="e.g. Carbon Steel Line Pipe, Sch 40"></div>
+    <div class="fg"><label class="fl">Specification</label><input class="fi" placeholder="e.g. ASTM A106 Gr. B"></div>
+    <div class="fg"><label class="fl">UOM <span class="req">*</span></label><select class="fi"><option>EA</option><option>JT</option><option>M</option><option>KG</option><option>SET</option></select></div>
+    <div class="fg"><label class="fl">Warehouse <span class="req">*</span></label><select class="fi"><option>WH-PHC</option><option>WH-ABJ</option><option>WH-UBE</option><option>WH-AKK</option><option>WH-LOS</option></select></div>
+    <div class="fg"><label class="fl">Bin Location</label><input class="fi" placeholder="e.g. A3-R2-S4"></div>
+    <div class="fg"><label class="fl">Min Stock Level</label><input class="fi" type="number" placeholder="10"></div>
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:16px;display:flex;gap:8px;">
+      <button class="btn btn-teal" onclick="hideFP()"><i class="fa-solid fa-check"></i> Save &amp; Generate QR</button>
+      <button class="btn btn-outline" onclick="hideFP()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function goTab(n){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab-item').forEach(t=>t.classList.remove('active'));
+  document.getElementById('s-'+n).classList.add('active');
+  const tabs=document.querySelectorAll('.tab-item');
+  const ns=['overview','master','inventory','scan','movements','mrn','warehouses'];
+  const i=ns.indexOf(n); if(i>=0)tabs[i].classList.add('active');
+}
+function showFP(){document.getElementById('fpanel').classList.add('vis');}
+function hideFP(){document.getElementById('fpanel').classList.remove('vis');}
+function doScan(){
+  document.getElementById('scanView').innerHTML='<div style="color:var(--teal);font-size:52px;"><i class="fa-solid fa-circle-check"></i></div><div style="color:white;margin-top:12px;font-weight:600;">QR Scanned!</div><div class="scan-hint">PIP-CSL-06-0001</div>';
+  document.getElementById('resPanel').style.display='block';
+  document.getElementById('cfmBox').style.display='none';
+}
+function selA(el){document.querySelectorAll('.act-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');}
+function cfmMove(){document.getElementById('resPanel').style.display='none';document.getElementById('cfmBox').style.display='block';document.getElementById('cfmBox').classList.add('vis');}
+function rstScan(){
+  document.getElementById('cfmBox').style.display='none';
+  document.getElementById('resPanel').style.display='block';
+  document.getElementById('scanView').innerHTML='<div class="scan-frame"><i class="fa-solid fa-qrcode" style="font-size:40px;color:rgba(255,255,255,0.12);"></i></div><div class="scan-hint">Position QR code within frame</div><button class="btn btn-teal" style="margin-top:20px;" onclick="doScan()"><i class="fa-solid fa-camera"></i> Simulate Scan</button>';
+}
+</script>
+
+</body></html>

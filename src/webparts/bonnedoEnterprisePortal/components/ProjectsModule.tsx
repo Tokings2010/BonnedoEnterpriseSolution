@@ -10,13 +10,16 @@ import {
   ProgressIndicator,
   Pivot,
   PivotItem,
+  Icon,
 } from '@fluentui/react';
 import { SPHttpClient } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
-import DataGrid from './DataGrid';
-import { IDataGridColumn } from './DataGrid';
+import EnhancedDataGrid from './EnhancedDataGrid';
+import { IDataGridColumn } from './EnhancedDataGrid';
 import ProjectDetailsPanel from './ProjectDetailsPanel';
-import ProjectForm from './ProjectForm';
+import ProjectCreatePanel from './ProjectsModule/ProjectCreatePanel';
+import ProjectScheduleTab from './ProjectsModule/ProjectScheduleTab';
+import ProjectBudgetTab from './ProjectsModule/ProjectBudgetTab';
 import { WebPartContext } from '@microsoft/sp-webpart-base';
 import { createProjectProvisioningService, IProvisioningResult, IProvisioningProgress } from '../services/ProjectProvisioningService';
 import { createTaskRegisterService } from '../services/TaskRegisterService';
@@ -60,7 +63,7 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
   const [provisioningProgress, setProvisioningProgress] = React.useState<IProvisioningProgress | null>(null);
   const [isTaskFormOpen, setIsTaskFormOpen] = React.useState(false);
   const [taskInitialData, setTaskInitialData] = React.useState<any>(null);
-  const [selectedTab, setSelectedTab] = React.useState<'projects' | 'tasks'>('projects');
+  const [selectedTab, setSelectedTab] = React.useState<'projects' | 'tasks' | 'schedule' | 'budget'>('projects');
   const [selectedTask, setSelectedTask] = React.useState<ITaskItem | undefined>(undefined);
   const [isTaskDetailsPanelOpen, setIsTaskDetailsPanelOpen] = React.useState(false);
 
@@ -156,6 +159,24 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
     cardValue: {
       color: theme.palette.neutralSecondary,
       fontSize: '14px',
+    },
+    emptyState: {
+      display: 'flex',
+      flexDirection: 'column' as const,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: '12px',
+      padding: '40px 24px',
+      textAlign: 'center' as const,
+      height: '100%',
+      minHeight: '320px',
+      backgroundColor: theme.palette.neutralLighterAlt,
+      border: `1px dashed ${theme.palette.neutralLight}`,
+      borderRadius: '4px',
+    },
+    emptyStateIcon: {
+      fontSize: '48px',
+      color: theme.palette.neutralTertiary,
     },
     statusBadge: {
       display: 'inline-block',
@@ -304,6 +325,7 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
     projectName: string;
     projectCode: string;
     projectManagerId?: string | number;
+    projectManagerEmail?: string;
   }): Promise<void> => {
     setIsFormPanelOpen(false);
 
@@ -324,7 +346,7 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
             projectId: projectDetails.projectId,
             projectName: projectDetails.projectName,
             projectCode: projectDetails.projectCode,
-            projectManagerEmail: '', // Will be updated in a separate step if needed
+            projectManagerEmail: projectDetails.projectManagerEmail || '',
           },
           (progress: IProvisioningProgress) => {
             setProvisioningProgress(progress);
@@ -381,6 +403,18 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
     return `${day} ${month} ${year}`;
   };
 
+  const renderProjectSelectionState = (iconName: string, title: string, message: string): React.ReactNode => (
+    <div className={classNames.emptyState}>
+      <Icon iconName={iconName} className={classNames.emptyStateIcon} />
+      <Text variant="large" block style={{ fontWeight: 600, color: theme.palette.neutralPrimary }}>
+        {title}
+      </Text>
+      <Text variant="medium" style={{ color: theme.palette.neutralSecondary, maxWidth: '420px' }}>
+        {message}
+      </Text>
+    </div>
+  );
+
   return (
     <div className={classNames.root}>
       <Pivot
@@ -422,9 +456,8 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
 
             {/* Grid/Card Container */}
             <div className={classNames.gridContainer}>
-              {isMobileView ? (
-                <DataGrid
-                  key={`projects-mobile-${refreshKey}`}
+          <EnhancedDataGrid
+                  key={`projects-${refreshKey}`}
                   listName="ENT_Project_Master"
                   columns={projectColumns}
                   pageSize={20}
@@ -432,19 +465,8 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
                   pageContext={pageContext}
                   expandQuery="Project_Manager"
                   onRowSelected={handleRowSelected}
+                  showExport
                 />
-              ) : (
-                <DataGrid
-                  key={`projects-desktop-${refreshKey}`}
-                  listName="ENT_Project_Master"
-                  columns={projectColumns}
-                  pageSize={20}
-                  spHttpClient={spHttpClient}
-                  pageContext={pageContext}
-                  expandQuery="Project_Manager"
-                  onRowSelected={handleRowSelected}
-                />
-              )}
             </div>
           </div>
         </PivotItem>
@@ -479,7 +501,7 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
 
             {/* Task Grid using same DataGrid pattern */}
             <div className={classNames.gridContainer}>
-              <DataGrid
+              <EnhancedDataGrid
                 key={`tasks-${refreshKey}`}
                 listName="Project_Task_Register"
                 columns={[
@@ -495,7 +517,83 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
                 spHttpClient={spHttpClient}
                 pageContext={pageContext}
                  onRowSelected={handleTaskRowSelected}
+                 showExport
               />
+            </div>
+          </div>
+        </PivotItem>
+        {/* Project Schedule Tab */}
+        <PivotItem headerText="Project Schedule" itemKey="schedule" style={{ flex: 1, overflow: 'hidden' }}>
+          <div style={{ height: '100%', overflow: 'hidden' }}>
+            <div className={classNames.header}>
+              <div className={classNames.headerTitle}>
+                <Text variant="xxLarge" block style={{ fontWeight: 600, marginBottom: '4px' }}>
+                  Project Schedule
+                </Text>
+                <Text variant="medium" block style={{ color: theme.palette.neutralSecondary }}>
+                  Track WBS activities, progress, and schedule variance
+                </Text>
+              </div>
+              <div className={classNames.headerActions}>
+                <IconButton
+                  iconProps={{ iconName: 'Refresh' }}
+                  onClick={handleRefresh}
+                  title="Refresh schedule"
+                  ariaLabel="Refresh schedule"
+                />
+              </div>
+            </div>
+
+            <div className={classNames.gridContainer}>
+              {selectedProject?.Project_Code ? (
+                <ProjectScheduleTab
+                  projectCode={selectedProject.Project_Code}
+                  spHttpClient={spHttpClient}
+                  pageContext={pageContext}
+                  isMobileView={isMobileView}
+                  onRefresh={handleRefresh}
+                />
+              ) : (
+                renderProjectSelectionState('Timeline', 'Select a project', 'Choose a project from the Projects tab to view its schedule and WBS activities.')
+              )}
+            </div>
+          </div>
+        </PivotItem>
+
+        {/* Project Budget Tab */}
+        <PivotItem headerText="Project Budget" itemKey="budget" style={{ flex: 1, overflow: 'hidden' }}>
+          <div style={{ height: '100%', overflow: 'hidden' }}>
+            <div className={classNames.header}>
+              <div className={classNames.headerTitle}>
+                <Text variant="xxLarge" block style={{ fontWeight: 600, marginBottom: '4px' }}>
+                  Project Budget
+                </Text>
+                <Text variant="medium" block style={{ color: theme.palette.neutralSecondary }}>
+                  Monitor CBS budget, actual spend, variance, and utilization
+                </Text>
+              </div>
+              <div className={classNames.headerActions}>
+                <IconButton
+                  iconProps={{ iconName: 'Refresh' }}
+                  onClick={handleRefresh}
+                  title="Refresh budget"
+                  ariaLabel="Refresh budget"
+                />
+              </div>
+            </div>
+
+            <div className={classNames.gridContainer}>
+              {selectedProject?.Project_Code ? (
+                <ProjectBudgetTab
+                  projectCode={selectedProject.Project_Code}
+                  spHttpClient={spHttpClient}
+                  pageContext={pageContext}
+                  isMobileView={isMobileView}
+                  onRefresh={handleRefresh}
+                />
+              ) : (
+                renderProjectSelectionState('Money', 'Select a project', 'Choose a project from the Projects tab to view its budget and CBS data.')
+              )}
             </div>
           </div>
         </PivotItem>
@@ -511,11 +609,11 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
         pageContext={pageContext}
       />
 
-      {/* Project Form Panel */}
-      <ProjectForm
+      {/* Project Create Panel */}
+      <ProjectCreatePanel
         isOpen={isFormPanelOpen}
         onDismiss={() => setIsFormPanelOpen(false)}
-        onSubmitSuccess={handleFormSubmit}
+        onProjectCreated={handleFormSubmit}
         spHttpClient={spHttpClient}
         pageContext={pageContext}
         webPartContext={webPartContext}

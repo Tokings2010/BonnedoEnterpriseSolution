@@ -12,8 +12,8 @@ import {
 } from '@fluentui/react';
 import { SPHttpClient } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
-import DataGrid from './DataGrid';
-import { IDataGridColumn } from './DataGrid';
+import EnhancedDataGrid from './EnhancedDataGrid';
+import { IDataGridColumn } from './EnhancedDataGrid';
 import { IListItem, SharePointService } from '../services/SharePointService';
 import { PermissionService } from '../services/PermissionService';
 import UserRoleForm from './UserRoleForm';
@@ -199,8 +199,8 @@ const SettingsUserRoles: React.FC<ISettingsUserRolesProps> = ({
                 Manage user roles and their permissions in the system. Double-click a row to edit.
             </Text>
 
-            <div style={{ height: 'calc(100vh - 280px)' }}>
-                <DataGrid
+            <div style={{ height: 'calc(100vh - 280px)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                <EnhancedDataGrid
                     key={refreshKey}
                     listName="SYS_User_Roles"
                     columns={userRolesColumns}
@@ -210,6 +210,7 @@ const SettingsUserRoles: React.FC<ISettingsUserRolesProps> = ({
                     expandQuery="User"
                     onRowSelected={handleRowSelected}
                     onRowDoubleClick={handleRowDoubleClick}
+                    showExport
                 />
             </div>
 
