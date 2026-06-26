@@ -15,6 +15,7 @@ import {
   CommandBar,
   ICommandBarItemProps,
   ProgressIndicator,
+  PrimaryButton,
 } from '@fluentui/react';
 import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
@@ -26,6 +27,7 @@ import {
   IStoredProjectDocument,
   PROJECT_WBS_FOLDER_NAME,
 } from '../../services/ProjectDocumentStorageService';
+import { createWbsScheduleImportService, IWbsImportProgress, IWbsImportResult } from '../../services/WbsScheduleImportService';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -64,6 +66,8 @@ const getStyles = () =>
       display: 'flex',
       flexDirection: 'column' as const,
       gap: '16px',
+      overflow: 'auto',
+      height: '100%',
     },
     summaryRow: {
       display: 'flex',
@@ -166,6 +170,16 @@ const ProjectScheduleTab: React.FC<IProjectScheduleTabProps> = ({
   const [storedDocument, setStoredDocument] = React.useState<IStoredProjectDocument | undefined>(undefined);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [importResult, setImportResult] = React.useState<IWbsImportResult | null>(null);
+  const [importProgress, setImportProgress] = React.useState<IWbsImportProgress | null>(null);
+  const [isImporting, setIsImporting] = React.useState(false);
+  const [importError, setImportError] = React.useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const wbsImportService = React.useMemo(
+    () => createWbsScheduleImportService(spHttpClient, pageContext),
+    [spHttpClient, pageContext]
+  );
 
   // ─── Fetch Data ──────────────────────────────────────────────────────────
 
@@ -276,6 +290,50 @@ const ProjectScheduleTab: React.FC<IProjectScheduleTabProps> = ({
     fetchStoredDocument().catch((error) => console.error('Error refreshing stored schedule document:', error));
   }, [fetchScheduleItems, fetchStoredDocument]);
 
+  // ─── WBS File Import Handler ───────────────────────────────────────────────
+
+  const handleWbsFileImport = React.useCallback(async (file: File): Promise<void> => {
+    setImportError(null);
+    setImportResult(null);
+    setIsImporting(true);
+    setImportProgress({ step: 'start', message: 'Reading WBS file...', progress: 0, currentRow: 0, totalRows: 0 });
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const result = await wbsImportService.importWbsFile({
+        fileName: file.name,
+        projectCode,
+        fileBuffer: buffer,
+      }, (progress: IWbsImportProgress) => {
+        setImportProgress({ ...progress });
+      });
+
+      setImportResult(result);
+      if (result.success) {
+        await fetchScheduleItems();
+        await fetchStoredDocument();
+        onRefresh();
+      }
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Failed to import WBS file');
+    } finally {
+      setIsImporting(false);
+      setImportProgress(null);
+    }
+  }, [wbsImportService, projectCode, fetchScheduleItems, fetchStoredDocument, onRefresh]);
+
+  const handleImportButtonClick = (): void => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleWbsFileImport(file).catch(console.error);
+    }
+    if (e.target) e.target.value = '';
+  };
+
   // ─── Calculations ────────────────────────────────────────────────────────
 
   const totalActivities = items.length;
@@ -295,6 +353,13 @@ const ProjectScheduleTab: React.FC<IProjectScheduleTabProps> = ({
 
   const commandBarItems: ICommandBarItemProps[] = [
     {
+      key: 'importWbs',
+      text: isImporting ? 'Importing...' : 'Import WBS',
+      iconProps: { iconName: 'ExcelDocument' },
+      disabled: !projectCode || isImporting,
+      onClick: handleImportButtonClick,
+    },
+    {
       key: 'refresh',
       text: 'Refresh',
       iconProps: { iconName: 'Refresh' },
@@ -304,6 +369,17 @@ const ProjectScheduleTab: React.FC<IProjectScheduleTabProps> = ({
       },
     },
   ];
+
+  // Hidden file input
+  const hiddenFileInput = (
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept=".xlsx,.xls,.csv"
+      style={{ display: 'none' }}
+      onChange={handleFileSelected}
+    />
+  );
 
   // ─── Columns ─────────────────────────────────────────────────────────────
 
@@ -368,7 +444,7 @@ const ProjectScheduleTab: React.FC<IProjectScheduleTabProps> = ({
     return <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>;
   }
 
-  if (items.length === 0) {
+  if (items.length === 0 && !importResult && !isImporting) {
     return (
       <Stack horizontalAlign="center" tokens={{ childrenGap: 12, padding: 40 }}>
         <Icon iconName="Timeline" styles={{ root: { fontSize: 48, color: '#D1D5DB' } }} />
@@ -378,14 +454,17 @@ const ProjectScheduleTab: React.FC<IProjectScheduleTabProps> = ({
             <Text variant="small" styles={{ root: { color: '#9CA3AF' } }}>
               Source file found at {getProjectDocumentDisplayPath(PROJECT_WBS_FOLDER_NAME, projectCode, storedDocument.name)}.
             </Text>
-            <Text variant="small" styles={{ root: { color: '#9CA3AF' } }}>
-              Parsed list data is not available yet. Refresh after the WBS processing flow completes.
-            </Text>
+            <PrimaryButton text="Import WBS File" iconProps={{ iconName: 'ExcelDocument' }} onClick={handleImportButtonClick} />
+            {hiddenFileInput}
           </>
         ) : (
-          <Text variant="small" styles={{ root: { color: '#9CA3AF' } }}>
-            Upload a WBS file named {getProjectDocumentFileName(projectCode, 'schedule')} to {getProjectDocumentDisplayPath(PROJECT_WBS_FOLDER_NAME, projectCode, getProjectDocumentFileName(projectCode, 'schedule'))}.
-          </Text>
+          <>
+            <Text variant="small" styles={{ root: { color: '#9CA3AF' } }}>
+              Upload a WBS file named {getProjectDocumentFileName(projectCode, 'schedule')} to {getProjectDocumentDisplayPath(PROJECT_WBS_FOLDER_NAME, projectCode, getProjectDocumentFileName(projectCode, 'schedule'))}.
+            </Text>
+            <PrimaryButton text="Upload & Import WBS" iconProps={{ iconName: 'ExcelDocument' }} onClick={handleImportButtonClick} />
+            {hiddenFileInput}
+          </>
         )}
       </Stack>
     );
@@ -393,7 +472,51 @@ const ProjectScheduleTab: React.FC<IProjectScheduleTabProps> = ({
 
   return (
     <div className={styles.container}>
+      {hiddenFileInput}
+
       <CommandBar items={commandBarItems} />
+
+      {/* Import Progress */}
+      {isImporting && importProgress && (
+        <div style={{ padding: '12px 16px', backgroundColor: '#F0F6FF', borderRadius: '8px', border: '1px solid #B3D4FF' }}>
+          <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 12 }}>
+            <Spinner size={SpinnerSize.small} />
+            <Text variant="small" styles={{ root: { color: '#1E2532', fontWeight: 500 } }}>
+              {importProgress.message}
+            </Text>
+          </Stack>
+          {importProgress.totalRows && importProgress.totalRows > 0 && (
+            <ProgressIndicator percentComplete={importProgress.progress / 100} barHeight={4} styles={{ root: { marginTop: 8 } }} />
+          )}
+        </div>
+      )}
+
+      {/* Import Result */}
+      {importResult && (
+        <MessageBar messageBarType={importResult.success ? MessageBarType.success : MessageBarType.error} isMultiline onDismiss={() => setImportResult(null)}>
+          <strong>{importResult.summary}</strong>
+          {importResult.details.length > 0 && (
+            <ul style={{ margin: '8px 0 0', paddingLeft: 20 }}>
+              {importResult.details.slice(0, 10).map((d, i) => (
+                <li key={i}>
+                  <strong>{d.wbsId}</strong>: {d.action === 'created' ? '✅ Created' : d.action === 'updated' ? '🔄 Updated' : '⏭️ Skipped'}
+                  {d.reason ? ` — ${d.reason}` : ''}
+                </li>
+              ))}
+              {importResult.details.length > 10 && (
+                <li style={{ color: '#6B7280' }}>...and {importResult.details.length - 10} more rows</li>
+              )}
+            </ul>
+          )}
+        </MessageBar>
+      )}
+
+      {/* Import Error */}
+      {importError && (
+        <MessageBar messageBarType={MessageBarType.error} isMultiline onDismiss={() => setImportError(null)}>
+          {importError}
+        </MessageBar>
+      )}
 
       {/* Summary Cards */}
       <div className={styles.summaryRow}>

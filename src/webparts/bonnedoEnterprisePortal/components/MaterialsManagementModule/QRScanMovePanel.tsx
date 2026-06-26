@@ -22,7 +22,10 @@ import { PageContext } from '@microsoft/sp-page-context';
 import { SharePointService } from '../../services/SharePointService';
 import { SHAREPOINT_LISTS } from '../../constants/SharePointListNames';
 import { QRCodeService } from '../../services/QRCodeService';
+import { logCostTransaction } from '../../services/CostLinkService';
+import { createInventoryMovementService } from '../../services/InventoryMovementService';
 import { IMaterialMasterRecord } from '../../models/DataModels';
+import { IListItem } from '../../services/SharePointService';
 
 export type QRScanSource = 'qr-tab' | 'inventory' | 'movements';
 
@@ -54,11 +57,6 @@ interface IBarcodeDetector {
 
 interface IBarcodeDetectorConstructor {
   new (options?: { formats?: string[] }): IBarcodeDetector;
-}
-
-interface IInventoryAdjustment {
-  location: string;
-  delta: number;
 }
 
 interface IWorkflowStep {
@@ -131,7 +129,7 @@ const QR_SCAN_STYLES = mergeStyleSets({
   scanFrame: {
     width: 180,
     height: 180,
-    border: '2px solid rgba(0,184,148,0.4)',
+    border: '2px solid rgba(0,120,212,0.4)',
     borderRadius: 14,
     position: 'relative',
     display: 'flex',
@@ -144,8 +142,8 @@ const QR_SCAN_STYLES = mergeStyleSets({
     left: '15%',
     right: '15%',
     height: 2,
-    background: '#00B894',
-    boxShadow: '0 0 12px #00B894',
+    background: '#0078D4',
+    boxShadow: '0 0 12px #0078D4',
     animation: 'scanAnim 2s ease-in-out infinite',
   },
   scanHint: {
@@ -183,10 +181,10 @@ const QR_SCAN_STYLES = mergeStyleSets({
     textAlign: 'center',
   },
   workflowStepActive: {
-    borderColor: '#00B894',
-    backgroundColor: 'rgba(0,184,148,0.08)',
+    borderColor: '#0078D4',
+    backgroundColor: 'rgba(0,120,212,0.08)',
     fontWeight: 600,
-    color: '#00B894',
+    color: '#0078D4',
   },
   workflowArrow: {
     color: '#B0B8C4',
@@ -200,7 +198,7 @@ const QR_SCAN_STYLES = mergeStyleSets({
     boxShadow: '0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.02)',
   },
   resultTop: {
-    backgroundColor: '#00B894',
+    backgroundColor: '#0078D4',
     color: '#FFFFFF',
     padding: '12px 16px',
     display: 'flex',
@@ -269,17 +267,17 @@ const QR_SCAN_STYLES = mergeStyleSets({
     backgroundColor: '#FFFFFF',
   },
   actionCardHover: {
-    borderColor: '#00B894',
-    backgroundColor: 'rgba(0,184,148,0.08)',
+    borderColor: '#0078D4',
+    backgroundColor: 'rgba(0,120,212,0.08)',
   },
   actionCardSelected: {
-    borderColor: '#00B894',
-    backgroundColor: 'rgba(0,184,148,0.08)',
-    boxShadow: '0 0 0 2px rgba(0,184,148,0.15)',
+    borderColor: '#0078D4',
+    backgroundColor: 'rgba(0,120,212,0.08)',
+    boxShadow: '0 0 0 2px rgba(0,120,212,0.15)',
   },
   actionCardIcon: {
     fontSize: 18,
-    color: '#00B894',
+    color: '#0078D4',
     display: 'block',
     marginBottom: 5,
   },
@@ -351,8 +349,8 @@ const QR_SCAN_STYLES = mergeStyleSets({
     width: 52,
     height: 52,
     borderRadius: '50%',
-    backgroundColor: 'rgba(0,184,148,0.08)',
-    color: '#00B894',
+    backgroundColor: 'rgba(0,120,212,0.08)',
+    color: '#0078D4',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
@@ -374,8 +372,8 @@ const QR_SCAN_STYLES = mergeStyleSets({
     fontWeight: 600,
   },
   tagGreen: {
-    backgroundColor: 'rgba(0,184,148,0.08)',
-    color: '#00B894',
+    backgroundColor: 'rgba(0,120,212,0.08)',
+    color: '#0078D4',
   },
   tagBlue: {
     backgroundColor: 'rgba(74,144,217,0.08)',
@@ -490,33 +488,6 @@ function findMaterialByCodeOrQr(
   });
 }
 
-function getMovementAdjustments(
-  movementType: InventoryMovementType,
-  fromLocation: string,
-  toLocation: string,
-  qty: number
-): IInventoryAdjustment[] {
-  switch (movementType) {
-    case 'GRN':
-      return [{ location: toLocation, delta: qty }];
-    case 'Transfer Out':
-      return [
-        { location: fromLocation, delta: -qty },
-        { location: toLocation, delta: qty },
-      ];
-    case 'Issue':
-      return [{ location: fromLocation, delta: -qty }];
-    case 'Return':
-      return [{ location: toLocation, delta: qty }];
-    case 'Verify':
-      return [];
-    case 'Scrap':
-      return [{ location: fromLocation, delta: -qty }];
-    default:
-      return [];
-  }
-}
-
 function createBarcodeDetector(): IBarcodeDetector | undefined {
   const Detector = (window as unknown as { BarcodeDetector?: IBarcodeDetectorConstructor }).BarcodeDetector;
 
@@ -584,8 +555,11 @@ const QRScanMovePanel: React.FC<IQRScanMovePanelProps> = ({
 
   const [materialOptions, setMaterialOptions] = React.useState<IMaterialMasterRecord[]>([]);
   const [warehouseOptions, setWarehouseOptions] = React.useState<IWarehouseOption[]>([]);
+  const [projectOptions, setProjectOptions] = React.useState<IListItem[]>([]);
+  const [inventoryRecords, setInventoryRecords] = React.useState<IListItem[]>([]);
   const [referenceLoading, setReferenceLoading] = React.useState(false);
   const [saving, setSaving] = React.useState(false);
+  const [stockLoading, setStockLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [scanStatus, setScanStatus] = React.useState('');
   const [cameraActive, setCameraActive] = React.useState(false);
@@ -608,6 +582,11 @@ const QRScanMovePanel: React.FC<IQRScanMovePanelProps> = ({
 
   const sharePointService = React.useMemo(
     () => new SharePointService(spHttpClient, pageContext),
+    [spHttpClient, pageContext]
+  );
+
+  const inventoryMovementService = React.useMemo(
+    () => createInventoryMovementService(spHttpClient, pageContext),
     [spHttpClient, pageContext]
   );
 
@@ -656,9 +635,11 @@ const QRScanMovePanel: React.FC<IQRScanMovePanelProps> = ({
     setError(null);
 
     try {
-      const [materials, warehouses] = await Promise.all([
+      const [materials, warehouses, projects, inventory] = await Promise.all([
         sharePointService.getMaterialMasterRecords(),
         sharePointService.getWarehouses().catch(() => []),
+        sharePointService.getListData('ENT_Project_Master', undefined, 200).catch(() => []),
+        sharePointService.getInventoryRecords().catch(() => []),
       ]);
 
       setMaterialOptions(materials);
@@ -669,6 +650,8 @@ const QRScanMovePanel: React.FC<IQRScanMovePanelProps> = ({
           status: warehouse.Status || 'Active',
         }))
       );
+      setProjectOptions(projects);
+      setInventoryRecords(inventory);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load scan reference data');
     } finally {
@@ -902,61 +885,20 @@ const QRScanMovePanel: React.FC<IQRScanMovePanelProps> = ({
       project: string,
       timestamp: string
     ): Promise<void> => {
-      if (movement === 'Transfer Out' && from && to && from === to) {
-        throw new Error('Choose different locations for transfer movements.');
-      }
-
-      const adjustments = getMovementAdjustments(movement, from, to, qty);
-
-      if (adjustments.some((adjustment) => !adjustment.location)) {
-        throw new Error('Select a warehouse location for this movement.');
-      }
-
-      const inventoryRecords = await sharePointService.getInventoryRecords();
-
-      for (const adjustment of adjustments) {
-        const existingRecord = inventoryRecords.find((record) => {
-          const matchesMaterial = record.Material_Code === code;
-          const matchesLocation = record.Location === adjustment.location;
-          const matchesProject = project ? record.Project_Code === project : !record.Project_Code;
-          return matchesMaterial && matchesLocation && matchesProject;
-        });
-
-        if (!existingRecord) {
-          if (adjustment.delta < 0) {
-            throw new Error(`No inventory found for ${code} at ${adjustment.location}.`);
-          }
-
-          await sharePointService.createListItem(SHAREPOINT_LISTS.INVENTORY_REGISTER, {
-            Title: `${code} - ${adjustment.location}`,
-            Material_Code: code,
-            Location: adjustment.location,
-            Project_Code: project || null,
-            Qty_On_Hand: adjustment.delta,
-            QtyReserved: 0,
-            Condition: 'Good',
-            Status: 'Available',
-            DateReceived: timestamp,
-            Last_Movement_Date: timestamp,
-          });
-          continue;
-        }
-
-        const currentQty = Number(existingRecord.Qty_On_Hand || 0);
-        const nextQty = currentQty + adjustment.delta;
-
-        if (nextQty < 0) {
-          throw new Error(`Insufficient stock for ${code} at ${adjustment.location}.`);
-        }
-
-        await sharePointService.updateListItem(SHAREPOINT_LISTS.INVENTORY_REGISTER, existingRecord.ID, {
-          Qty_On_Hand: nextQty,
-          Last_Movement_Date: timestamp,
-          Status: nextQty === 0 ? 'Available' : existingRecord.Status || 'Available',
-        });
+      const result = await inventoryMovementService.processMovement({
+        movementType: movement as 'GRN' | 'Transfer Out' | 'Issue' | 'Return' | 'Scrap',
+        materialCode: code,
+        quantity: qty,
+        fromLocation: from || undefined,
+        toLocation: to || undefined,
+        projectCode: project || undefined,
+        timestamp,
+      });
+      if (!result.success) {
+        throw new Error(result.error || 'Movement processing failed');
       }
     },
-    [sharePointService]
+    [inventoryMovementService]
   );
 
   const handleSaveMovement = React.useCallback(async (): Promise<void> => {
@@ -997,6 +939,27 @@ const QRScanMovePanel: React.FC<IQRScanMovePanelProps> = ({
       return;
     }
 
+    // ── Stock validation ──
+    const isOutgoing = ['Transfer Out', 'Issue', 'Scrap'].includes(movementType);
+    if (isOutgoing) {
+      if (!fromLocation) {
+        setError('Select a source warehouse for this movement.');
+        return;
+      }
+      if (parsedQuantity > availableAtFrom) {
+        setError(`Insufficient stock at ${fromLocation}. Available: ${availableAtFrom}, requested: ${parsedQuantity}.`);
+        return;
+      }
+    }
+    if (movementType === 'Transfer Out' && fromLocation && toLocation && fromLocation === toLocation) {
+      setError('Source and destination warehouses must be different for transfers.');
+      return;
+    }
+    if ((movementType === 'GRN' || movementType === 'Return') && !toLocation) {
+      setError('Select a destination warehouse for this movement.');
+      return;
+    }
+
     const timestamp = new Date().toISOString();
     const movementNote = [
       note,
@@ -1028,6 +991,30 @@ const QRScanMovePanel: React.FC<IQRScanMovePanelProps> = ({
         projectCode,
         timestamp
       );
+
+      // Log cost transaction for Issue movements
+      if (movementType === 'Issue') {
+        try {
+          const matUrl = `${pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('ENT_Materials_Master')/items?$filter=Material_Code eq '${parsedMaterialCode}'&$select=Standard_Cost&$top=1`;
+          const matResp = await spHttpClient.get(matUrl, SPHttpClient.configurations.v1, {
+            headers: { 'Accept': 'application/json;odata=nometadata' },
+          });
+          const matData = await matResp.json();
+          const standardCost = matData.value?.[0]?.Standard_Cost || 0;
+
+          await logCostTransaction(spHttpClient, pageContext, {
+            projectCode: projectCode,
+            phase: '',
+            transactionType: 'Material Issue',
+            amount: standardCost * parsedQuantity,
+            referenceId: parsedMaterialCode,
+            referenceType: 'Material Issue',
+            description: `Issued ${parsedQuantity} x ${parsedMaterialCode}`,
+          });
+        } catch (costErr) {
+          console.warn('[QRScan] Failed to log cost for Issue movement:', costErr);
+        }
+      }
 
       setConfirmedMovement({
         movementType,
@@ -1066,6 +1053,16 @@ const QRScanMovePanel: React.FC<IQRScanMovePanelProps> = ({
     text: warehouse.code ? `${warehouse.code} — ${warehouse.name}` : warehouse.name,
   }));
 
+  const projectDropdownOptions: IDropdownOption[] = React.useMemo(() => {
+    return [
+      { key: '', text: 'No project' },
+      ...projectOptions.map((p) => ({
+        key: p.Project_Code || p.Title || '',
+        text: `${p.Project_Code || ''} — ${p.Project_Name || p.Title || ''}`,
+      })),
+    ];
+  }, [projectOptions]);
+
   const movementDetail = React.useMemo(() => {
     if (!confirmedMovement) {
       return '';
@@ -1074,6 +1071,28 @@ const QRScanMovePanel: React.FC<IQRScanMovePanelProps> = ({
     const locations = [confirmedMovement.fromLocation, confirmedMovement.toLocation].filter(Boolean).join(' → ');
     return `${confirmedMovement.materialCode} — ${confirmedMovement.movementType}${locations ? ` (${locations}, ${confirmedMovement.quantity})` : ` (${confirmedMovement.quantity})`}`;
   }, [confirmedMovement]);
+
+  // ── Stock Balance Computations ──
+  const stockBalance = React.useMemo(() => {
+    if (!selectedMaterial) return null;
+    const code = selectedMaterial.Material_Code;
+    const records = inventoryRecords.filter((r: any) => r.Material_Code === code);
+    const total = records.reduce((sum: number, r: any) => sum + Number(r.Qty_On_Hand || 0), 0);
+    // Breakdown by warehouse
+    const byWarehouse = warehouseOptions.map(wh => {
+      const match = records.find((r: any) => r.Location === wh.code);
+      return { code: wh.code, name: wh.name, qty: match ? Number(match.Qty_On_Hand || 0) : 0 };
+    }).filter(w => w.qty > 0);
+
+    return { total, byWarehouse, records };
+  }, [selectedMaterial, inventoryRecords, warehouseOptions]);
+
+  // ── Available stock at selected From location ──
+  const availableAtFrom = React.useMemo(() => {
+    if (!fromLocation || !stockBalance) return 0;
+    const match = stockBalance.records.find((r: any) => r.Location === fromLocation);
+    return match ? Number(match.Qty_On_Hand || 0) : 0;
+  }, [fromLocation, stockBalance]);
 
   const canSave = Boolean(selectedMaterial) && Boolean(movementType) && !referenceLoading && !saving;
 
@@ -1260,8 +1279,12 @@ const QRScanMovePanel: React.FC<IQRScanMovePanelProps> = ({
                         <div className={QR_SCAN_STYLES.detailValue}>{selectedMaterial.UOM || 'N/A'}</div>
                       </div>
                       <div className={QR_SCAN_STYLES.detailItem}>
-                        <div className={QR_SCAN_STYLES.detailLabel}>Warehouse</div>
-                        <div className={QR_SCAN_STYLES.detailValue}>{toLocation || fromLocation || 'Select location'}</div>
+                        <div className={QR_SCAN_STYLES.detailLabel}>Stock Balance</div>
+                        <div className={QR_SCAN_STYLES.detailValue}>
+                          <span style={{ fontWeight: 600, color: stockBalance && stockBalance.total > 0 ? '#107C10' : '#D13438' }}>
+                            {stockBalance ? `${stockBalance.total} ${selectedMaterial.UOM || 'units'}` : 'Loading...'}
+                          </span>
+                        </div>
                       </div>
                       <div className={QR_SCAN_STYLES.detailItem}>
                         <div className={QR_SCAN_STYLES.detailLabel}>Movement</div>
@@ -1316,22 +1339,55 @@ const QRScanMovePanel: React.FC<IQRScanMovePanelProps> = ({
                     </div>
 
                     <div className={QR_SCAN_STYLES.actionControls}>
-                      <Dropdown
-                        label="Location"
-                        placeholder="Select warehouse"
-                        selectedKey={fromLocation || toLocation || undefined}
-                        options={warehouseOptionsForDropdown}
-                        onChange={(_, option) => {
-                          const nextLocation = (option?.key as string) || '';
-                          if (movementType === 'GRN' || movementType === 'Return') {
-                            setToLocation(nextLocation);
-                          } else {
-                            setFromLocation(nextLocation);
-                          }
-                        }}
-                        disabled={saving}
-                        className={QR_SCAN_STYLES.compactDropdown}
-                      />
+                      {/* Stock balance info */}
+                      {stockBalance && (
+                        <div style={{ width: '100%', marginBottom: 4 }}>
+                          <div style={{ fontSize: 11, color: '#616161', fontWeight: 500 }}>
+                            Current stock: <strong style={{ color: stockBalance.total > 0 ? '#107C10' : '#D13438' }}>
+                              {stockBalance.total > 0 ? `${stockBalance.total} units` : 'None'}
+                            </strong>
+                            {stockBalance.byWarehouse.length > 0 && (
+                              <span style={{ color: '#8A8A8A', fontSize: 10 }}>
+                                {' '}({stockBalance.byWarehouse.map(w => `${w.code}: ${w.qty}`).join(', ')})
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* From warehouse (shown for outgoing movements) */}
+                      {['Transfer Out', 'Issue', 'Scrap'].includes(movementType) && (
+                        <Dropdown
+                          label="From warehouse"
+                          placeholder="Select source"
+                          selectedKey={fromLocation || undefined}
+                          options={warehouseOptionsForDropdown}
+                          onChange={(_, option) => setFromLocation((option?.key as string) || '')}
+                          disabled={saving}
+                          styles={{ root: { minWidth: 180 } }}
+                        />
+                      )}
+
+                      {/* To warehouse (shown for incoming movements) */}
+                      {['GRN', 'Transfer Out', 'Return'].includes(movementType) && (
+                        <Dropdown
+                          label={movementType === 'Transfer Out' ? 'To warehouse' : 'Destination warehouse'}
+                          placeholder="Select destination"
+                          selectedKey={toLocation || undefined}
+                          options={warehouseOptionsForDropdown}
+                          onChange={(_, option) => setToLocation((option?.key as string) || '')}
+                          disabled={saving}
+                          styles={{ root: { minWidth: 180 } }}
+                        />
+                      )}
+
+                      {/* Available stock indicator for outgoing */}
+                      {['Transfer Out', 'Issue', 'Scrap'].includes(movementType) && fromLocation && (
+                        <div style={{ width: '100%', fontSize: 11, color: '#616161' }}>
+                          Available at {fromLocation}: <strong>{availableAtFrom}</strong>
+                        </div>
+                      )}
+
                       <TextField
                         label="Qty"
                         type="number"
@@ -1342,15 +1398,17 @@ const QRScanMovePanel: React.FC<IQRScanMovePanelProps> = ({
                         disabled={saving}
                         className={QR_SCAN_STYLES.compactTextField}
                       />
-                      <TextField
-                        label="Project code"
-                        value={projectCode}
-                        onChange={(_, value) => setProjectCode(value || '')}
+                      <Dropdown
+                        label="Project"
+                        placeholder="Select project"
+                        selectedKey={projectCode || undefined}
+                        options={projectDropdownOptions}
+                        onChange={(_, opt) => setProjectCode((opt?.key as string) || '')}
                         disabled={saving}
-                        styles={{ root: { minWidth: 150 } }}
+                        styles={{ root: { minWidth: 180 } }}
                       />
                       <PrimaryButton
-                        text="Confirm"
+                        text="Confirm Movement"
                         iconProps={{ iconName: 'Accept' }}
                         onClick={() => handleSaveMovement().catch(() => undefined)}
                         disabled={!canSave}

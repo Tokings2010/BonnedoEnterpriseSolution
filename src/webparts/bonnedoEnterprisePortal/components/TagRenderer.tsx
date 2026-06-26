@@ -4,12 +4,12 @@ import { getTheme } from '@fluentui/react';
 export type TagVariant = 'teal' | 'blue' | 'orange' | 'red' | 'purple' | 'green' | 'yellow' | 'gray';
 
 export const TAG_COLORS: Record<TagVariant, { bg: string; color: string }> = {
-  teal: { bg: 'rgba(0,184,148,0.08)', color: '#00B894' },
+  teal: { bg: 'rgba(0,120,212,0.08)', color: '#0078D4' },
   blue: { bg: 'rgba(74,144,217,0.08)', color: '#4A90D9' },
   orange: { bg: 'rgba(243,156,18,0.08)', color: '#F39C12' },
   red: { bg: 'rgba(231,76,60,0.08)', color: '#E74C3C' },
   purple: { bg: 'rgba(155,89,182,0.08)', color: '#9B59B6' },
-  green: { bg: 'rgba(0,184,148,0.08)', color: '#00B894' },
+  green: { bg: 'rgba(0,120,212,0.08)', color: '#0078D4' },
   yellow: { bg: 'rgba(241,196,15,0.12)', color: '#B7950B' },
   gray: { bg: '#F3F4F6', color: '#6B7280' },
 };
@@ -92,7 +92,7 @@ export interface IProgressBarProps {
 
 export const ProgressBar: React.FC<IProgressBarProps> = ({
   percent,
-  color = '#00B894',
+  color = '#0078D4',
   height = 6,
   showLabel = false,
 }) => (

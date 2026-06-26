@@ -21,6 +21,66 @@ import { SharePointService } from '../services/SharePointService';
 import { QRCodeService } from '../services/QRCodeService';
 import { IMaterial } from './MaterialsModule';
 
+// ─── Category Code Mapping (matches HTML reference design) ──────────────────
+const CATEGORY_CODES: Record<string, string> = {
+  'Pipes': 'PIP',
+  'Valves': 'VAL',
+  'Fittings': 'FIT',
+  'Valves, Fittings & Accessories': 'FIT',
+  'Reducers': 'RED',
+  'Flanges': 'FLG',
+  'Tees': 'TEE',
+  'Bolts': 'BLT',
+  'Nuts': 'NUT',
+  'Gaskets': 'GSK',
+  'OEM Hardware & Software': 'OEM',
+  'OEM': 'OEM',
+  'Consumables': 'CON',
+  'Consumable': 'CON',
+  'PPE': 'PPE',
+  'Electrical': 'ELE',
+  'Instruments': 'INS',
+  'Safety': 'SPE',
+};
+
+// ─── Sub-Type Code Mapping ──────────────────────────────────────────────────
+const SUBTYPE_CODES: Record<string, string> = {
+  'Carbon Steel Line': 'CSL',
+  'Stainless Steel': 'SST',
+  'GRE': 'GRE',
+  'API 600': 'GAT',
+  'Class 150': 'CLS',
+  'Long Radius BW': 'ELB',
+  'Concentric BW': 'CON',
+  '150# RF': 'WNK',
+  'Equal BW': 'EQL',
+  'Grade 8.8': 'HEX',
+  'OEM Module': 'PLG',
+  'PPE': 'HLM',
+  'Consumable': 'WRD',
+  'N/A': '00',
+};
+
+function getCategoryCode(category: string): string {
+  return CATEGORY_CODES[category] || category.substring(0, 3).toUpperCase();
+}
+
+function getSubTypeCode(subType: string): string {
+  return SUBTYPE_CODES[subType] || subType.substring(0, 3).toUpperCase();
+}
+
+function getSizeCode(size: string): string {
+  if (!size || size === 'N/A') return '00';
+  // Extract numeric portion: "6"" -> "06", "10"" -> "10", "M16" -> "M16", "3.2mm" -> "3M"
+  const cleaned = size.replace(/"/g, '').trim();
+  // If it starts with a letter (like M16), keep it
+  if (/^[A-Z]/i.test(cleaned)) return cleaned;
+  // If it's a number with decimal, take integer part
+  const num = parseFloat(cleaned);
+  if (isNaN(num)) return '00';
+  return Math.floor(num).toString().padStart(2, '0');
+}
+
 const DEFAULT_SUB_TYPE_OPTIONS: IComboBoxOption[] = [
   { key: 'Carbon Steel Line', text: 'Carbon Steel Line' },
   { key: 'Stainless Steel', text: 'Stainless Steel' },
@@ -165,13 +225,30 @@ const MaterialForm: React.FC<IMaterialFormProps> = ({
     if (isOpen) {
       const autoGenerateCode = async (): Promise<void> => {
         try {
-          // Get all items and find the highest number
+          // Use current form category/subtype/size if available, else defaults
+          const cat = state.formData.Category || 'Pipes';
+          const sub = state.formData.SubType || 'Carbon Steel Line';
+          const sz = state.formData.Size || 'N/A';
+          const catCode = getCategoryCode(cat);
+          const subCode = getSubTypeCode(sub);
+          const sizeCode = getSizeCode(sz);
+
+          // Get all items and find the highest sequence for same category+subtype+size
           const allItems = await sharePointService.getListData('ENT_Materials_Master', undefined, 500, 0, undefined);
           let nextNumber = 1;
+          const prefix = `${catCode}-${subCode}-${sizeCode}-`;
           if (allItems && allItems.length > 0) {
             allItems.forEach((item) => {
               if (item.Material_Code) {
-                const matches = item.Material_Code.match(/\d+$/);
+                // Match same prefix pattern for sequential numbering
+                if (item.Material_Code.startsWith(prefix)) {
+                  const seq = parseInt(item.Material_Code.slice(prefix.length), 10);
+                  if (!isNaN(seq) && seq >= nextNumber) {
+                    nextNumber = seq + 1;
+                  }
+                }
+                // Also track global max as fallback
+                const matches = item.Material_Code.match(/\d{4}$/);
                 if (matches) {
                   const num = parseInt(matches[0], 10);
                   if (num >= nextNumber) {
@@ -182,7 +259,7 @@ const MaterialForm: React.FC<IMaterialFormProps> = ({
             });
           }
 
-          const newCode = `MAT-${nextNumber.toString().padStart(4, '0')}`;
+          const newCode = `${prefix}${nextNumber.toString().padStart(4, '0')}`;
           setState((prev) => ({
             ...prev,
             formData: { ...prev.formData, Material_Code: newCode },
@@ -190,10 +267,16 @@ const MaterialForm: React.FC<IMaterialFormProps> = ({
         } catch (error) {
           console.error('Error generating material code:', error);
           // Fallback to timestamp-based code
-          const timestamp = Date.now().toString().slice(-6);
+          const cat = state.formData.Category || 'PIP';
+          const sub = state.formData.SubType || 'CSL';
+          const sz = state.formData.Size || '00';
+          const catCode = getCategoryCode(cat);
+          const subCode = getSubTypeCode(sub);
+          const sizeCode = getSizeCode(sz);
+          const timestamp = Date.now().toString().slice(-4);
           setState((prev) => ({
             ...prev,
-            formData: { ...prev.formData, Material_Code: `MAT-${timestamp}` },
+            formData: { ...prev.formData, Material_Code: `${catCode}-${subCode}-${sizeCode}-${timestamp}` },
           }));
         }
       };
@@ -300,6 +383,26 @@ const MaterialForm: React.FC<IMaterialFormProps> = ({
       loadChoices().catch(console.error);
     }
   }, [isOpen, editMode, editMaterial, sharePointService]);
+
+  // Regenerate code when Category, SubType, or Size change (but only if form is open and not editing)
+  React.useEffect(() => {
+    if (isOpen && !editMode && state.formData.Material_Code) {
+      const cat = state.formData.Category || 'Pipes';
+      const sub = state.formData.SubType || 'Carbon Steel Line';
+      const sz = state.formData.Size || 'N/A';
+      const catCode = getCategoryCode(cat);
+      const subCode = getSubTypeCode(sub);
+      const sizeCode = getSizeCode(sz);
+      const latestSeq = state.formData.Material_Code.match(/\d{4}$/)?.[0] || '0001';
+      const prefix = `${catCode}-${subCode}-${sizeCode}-`;
+      if (!state.formData.Material_Code.startsWith(prefix)) {
+        setState((prev) => ({
+          ...prev,
+          formData: { ...prev.formData, Material_Code: `${prefix}${latestSeq}` },
+        }));
+      }
+    }
+  }, [isOpen, editMode, state.formData.Category, state.formData.SubType, state.formData.Size]);
 
     const classNames = mergeStyleSets({
         formContainer: {

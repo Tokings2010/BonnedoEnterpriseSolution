@@ -57,13 +57,19 @@ const ApprovalMetricsChart: React.FC<IApprovalMetricsChartProps> = ({
                         (item.Status || item.Approval_Status || '').toLowerCase() === 'rejected'
                     ).length;
 
-                    return {
-                        type,
-                        pending,
-                        approved,
-                        rejected,
-                        avgDays: Math.floor(Math.random() * 5) + 1, // Simulated avg days
-                    };
+                    // Compute real average days for approved items (from Created to now)
+                    const now = new Date();
+                    const approvedItems = items.filter((item: any) =>
+                        (item.Status || item.Approval_Status || '').toLowerCase() === 'approved' && item.Created
+                    );
+                    const totalDays = approvedItems.reduce((sum: number, item: any) => {
+                        const created = new Date(item.Created);
+                        const diffMs = now.getTime() - created.getTime();
+                        return sum + Math.max(1, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+                    }, 0);
+                    const avgDays = approvedItems.length > 0 ? Math.round(totalDays / approvedItems.length) : 0;
+
+                    return { type, pending, approved, rejected, avgDays };
                 };
 
                 const data: IApprovalData[] = [

@@ -154,7 +154,7 @@ const FinanceExpenseRegister: React.FC<IFinanceExpenseRegisterProps> = ({
                 </MessageBar>
             )}
 
-            <div style={{ height: 'calc(100vh - 220px)' }}>
+            <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 <DataGrid
                     key={refreshKey}
                     listName="FIN_Expense_Register"
@@ -241,7 +241,7 @@ const FinanceExpenseRegister: React.FC<IFinanceExpenseRegisterProps> = ({
                         <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${theme.palette.neutralLight}` }}>
                             <DefaultButton
                                 text="Track Approval"
-                                iconProps={{ iconName: 'CheckCircle' }}
+                                iconProps={{ iconName: 'CompletedSolid' }}
                                 onClick={openApprovalTracker}
                                 style={{ width: '100%' }}
                             />

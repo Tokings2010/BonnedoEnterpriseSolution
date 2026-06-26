@@ -22,6 +22,8 @@ import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
 import { WebPartContext } from '@microsoft/sp-webpart-base';
 import PeoplePicker from '../PeoplePicker';
+import { SharePointService } from '../../services/SharePointService';
+import { ProjectProvisioningService } from '../../services/ProjectProvisioningService';
 import {
   getProjectDocumentDisplayPath,
   getProjectDocumentStorage,
@@ -29,6 +31,8 @@ import {
   sanitizeProjectCodeForStorage,
   uploadProjectDocument,
 } from '../../services/ProjectDocumentStorageService';
+import { createCbsBudgetImportService, ICbsImportResult } from '../../services/CbsBudgetImportService';
+import { createWbsScheduleImportService } from '../../services/WbsScheduleImportService';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -169,7 +173,19 @@ const ProjectCreatePanel: React.FC<IProjectCreatePanelProps> = ({
     setUploadProgress('');
   };
 
-  // ─── File Handlers ───────────────────────────────────────────────────────
+  // ─── CBS Import State ──────────────────────────────────────────────────────
+
+  const [cbsImportResult, setCbsImportResult] = React.useState<ICbsImportResult | null>(null);
+
+  const cbsImportService = React.useMemo(
+    () => createCbsBudgetImportService(spHttpClient, pageContext),
+    [spHttpClient, pageContext]
+  );
+
+  const wbsImportService = React.useMemo(
+    () => createWbsScheduleImportService(spHttpClient, pageContext),
+    [spHttpClient, pageContext]
+  );
 
   const handleCbsFileChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     if (e.target.files && e.target.files.length > 0) {
@@ -223,222 +239,474 @@ const ProjectCreatePanel: React.FC<IProjectCreatePanelProps> = ({
       setMessage({ type: MessageBarType.error, text: 'End Date must be after Start Date' });
       return false;
     }
+    // Enforce CBS file for new projects (edit mode can skip if already uploaded)
+    if (!editMode && !cbsFile) {
+      setMessage({ type: MessageBarType.error, text: 'Budget (CBS) file is required. Please select a CBS Excel file before creating the project.' });
+      return false;
+    }
 
     return true;
   };
 
   const resolveProjectManagerId = async (): Promise<number | null> => {
-    if (!projectManagerId) {
+    if (!projectManagerId && !projectManagerEmail) {
       return null;
     }
 
+    // If projectManagerId is already a number, use it directly
     const numericId = parseInt(String(projectManagerId), 10);
     if (!isNaN(numericId)) {
       return numericId;
     }
 
     const isGraphGuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(String(projectManagerId));
-    const loginNameCandidates = [
-      projectManagerEmail,
-      isGraphGuid ? '' : projectManagerLoginName,
-    ].filter((value): value is string => !!value);
 
-    if (loginNameCandidates.length === 0) {
+    // Build login name candidates in priority order
+    const loginNameCandidates: string[] = [];
+
+    // 1. SharePoint claims format: i:0#.f|membership|{email}
+    if (projectManagerEmail) {
+      loginNameCandidates.push(`i:0#.f|membership|${projectManagerEmail}`);
+      loginNameCandidates.push(projectManagerEmail);
+    }
+
+    // 2. LoginName from PeoplePicker (if not a Graph GUID)
+    if (projectManagerLoginName && !isGraphGuid) {
+      loginNameCandidates.push(projectManagerLoginName);
+    }
+
+    // 3. For Graph GUIDs, try resolving via the email first (already added above)
+    //    Then try the classic "domain\username" format if email has an @
+    if (projectManagerEmail && projectManagerEmail.includes('@')) {
+      const domain = projectManagerEmail.split('@')[1]?.split('.')[0] || '';
+      const username = projectManagerEmail.split('@')[0] || '';
+      if (domain && username) {
+        loginNameCandidates.push(`${domain}\\${username}`);
+      }
+    }
+
+    // Filter out empty strings
+    const candidates = loginNameCandidates.filter((v): v is string => !!v);
+
+    if (candidates.length === 0) {
       return null;
     }
 
     const ensureUserUrl = `${pageContext.web.absoluteUrl}/_api/web/ensureuser`;
     let lastError = '';
 
-    for (const loginName of loginNameCandidates) {
-      const ensureUserResponse: SPHttpClientResponse = await spHttpClient.post(
-        ensureUserUrl,
-        SPHttpClient.configurations.v1,
-        {
-          headers: {
-            'Accept': 'application/json;odata=nometadata',
-            'Content-Type': 'application/json;odata=nometadata',
-          },
-          body: JSON.stringify({ logonName: loginName }),
+    for (const loginName of candidates) {
+      try {
+        const ensureUserResponse: SPHttpClientResponse = await spHttpClient.post(
+          ensureUserUrl,
+          SPHttpClient.configurations.v1,
+          {
+            headers: {
+              'Accept': 'application/json;odata=nometadata',
+              'Content-Type': 'application/json;odata=nometadata',
+            },
+            body: JSON.stringify({ logonName: loginName }),
+          }
+        );
+
+        if (ensureUserResponse.ok) {
+          const ensureUserData = await ensureUserResponse.json();
+          const resolvedId = ensureUserData.Data?.Id || ensureUserData.Id;
+          if (resolvedId) {
+            return resolvedId;
+          }
         }
-      );
 
-      if (ensureUserResponse.ok) {
-        const ensureUserData = await ensureUserResponse.json();
-        return ensureUserData.Data?.Id || ensureUserData.Id || null;
+        // Collect error for last resort
+        lastError = (await ensureUserResponse.text().catch(() => '')).trim();
+      } catch (e) {
+        lastError = e instanceof Error ? e.message : String(e);
       }
-
-      lastError = (await ensureUserResponse.text().catch(() => '')).trim();
     }
 
-    throw new Error(`Unable to resolve Project Manager: ${lastError || 'No valid SharePoint user identifier was provided'}`);
+    // If all SharePoint methods failed, try direct Graph API to get the user
+    if (webPartContext?.msGraphClientFactory && projectManagerEmail) {
+      try {
+        const graphClient = await webPartContext.msGraphClientFactory.getClient('3');
+        const graphUser = await graphClient
+          .api(`/users/${projectManagerEmail}`)
+          .select('id,userPrincipalName,mail')
+          .get();
+
+        if (graphUser?.userPrincipalName) {
+          // Try again with the userPrincipalName from Graph
+          const upnCandidates = [
+            `i:0#.f|membership|${graphUser.userPrincipalName}`,
+            graphUser.userPrincipalName,
+          ];
+          for (const upn of upnCandidates) {
+            try {
+              const upnResp = await spHttpClient.post(ensureUserUrl, SPHttpClient.configurations.v1, {
+                headers: { 'Accept': 'application/json;odata=nometadata', 'Content-Type': 'application/json;odata=nometadata' },
+                body: JSON.stringify({ logonName: upn }),
+              });
+              if (upnResp.ok) {
+                const upnData = await upnResp.json();
+                const resolvedId = upnData.Data?.Id || upnData.Id;
+                if (resolvedId) return resolvedId;
+              }
+            } catch { /* skip */ }
+          }
+        }
+      } catch { /* Graph resolve failed */ }
+    }
+
+    throw new Error(
+      `Unable to resolve Project Manager for "${projectManagerEmail || projectManagerLoginName}". ` +
+      `The user may not have access to this SharePoint site. ` +
+      `Please ensure the user is a member of this site (Site Permissions) and try again.`
+    );
+  };
+
+  // ─── File Deletion Helper (rollback) ───────────────────────────────────────
+
+  const deleteUploadedFile = async (folderServerRelativeUrl: string, fileName: string): Promise<void> => {
+    try {
+      const normalizedFolderUrl = folderServerRelativeUrl.startsWith('/') ? folderServerRelativeUrl : `/${folderServerRelativeUrl.replace(/^\/+/, '')}`;
+      const encodedFolder = encodeURIComponent(normalizedFolderUrl);
+      const encodedFile = encodeURIComponent(fileName);
+      const fileUrl = `${pageContext.web.absoluteUrl}/_api/web/GetFolderByServerRelativeUrl('${encodedFolder}')/Files('${encodedFile}')`;
+      await spHttpClient.post(fileUrl, SPHttpClient.configurations.v1, {
+        headers: {
+          'Accept': 'application/json;odata=verbose',
+          'X-HTTP-Method': 'DELETE',
+          'IF-MATCH': '*',
+        },
+        body: '',
+      });
+    } catch (e) {
+      console.warn('[Rollback] Failed to delete uploaded file:', fileName, e);
+    }
+  };
+
+  // ─── Check if budget or schedule data already exists (for edit mode) ──────
+
+  const checkBudgetDataExists = async (): Promise<boolean> => {
+    try {
+      const webUrl = pageContext.web.absoluteUrl;
+      const escaped = projectCode.replace(/'/g, "''");
+      const url = `${webUrl}/_api/web/lists/getbytitle('Project_Budget_Items')/items?$filter=Project_Code eq '${escaped}'&$top=1&$select=ID`;
+      const resp = await spHttpClient.get(url, SPHttpClient.configurations.v1);
+      if (!resp.ok) return false;
+      const data = await resp.json();
+      return (data.value || []).length > 0;
+    } catch { return false; }
+  };
+
+  const checkScheduleDataExists = async (): Promise<boolean> => {
+    try {
+      const webUrl = pageContext.web.absoluteUrl;
+      const escaped = projectCode.replace(/'/g, "''");
+      const url = `${webUrl}/_api/web/lists/getbytitle('Project_Schedule')/items?$filter=Project_Code eq '${escaped}'&$top=1&$select=ID`;
+      const resp = await spHttpClient.get(url, SPHttpClient.configurations.v1);
+      if (!resp.ok) return false;
+      const data = await resp.json();
+      return (data.value || []).length > 0;
+    } catch { return false; }
+  };
+
+  // ─── Local upload helper (uses pre-read buffer, avoids double arrayBuffer) ──
+
+  const uploadBufferToSharePoint = async (
+    buffer: ArrayBuffer,
+    fileName: string,
+    folderServerRelativeUrl: string
+  ): Promise<void> => {
+    const normalizedFolderUrl = folderServerRelativeUrl.startsWith('/')
+      ? folderServerRelativeUrl
+      : `/${folderServerRelativeUrl.replace(/^\/+/, '')}`;
+    const encodedFolder = encodeURIComponent(normalizedFolderUrl);
+    const encodedFile = encodeURIComponent(fileName);
+    const uploadUrl = `${pageContext.web.absoluteUrl}/_api/web/GetFolderByServerRelativeUrl('${encodedFolder}')/Files/add(url='${encodedFile}',overwrite=true)`;
+    const resp = await spHttpClient.post(uploadUrl, SPHttpClient.configurations.v1, {
+      headers: { 'Accept': 'application/json;odata=verbose', 'Content-Type': 'application/octet-stream' },
+      body: buffer,
+    });
+    if (!resp.ok) {
+      const errText = await resp.text().catch(() => '');
+      throw new Error(`Upload failed for '${fileName}': ${resp.status} ${errText.substring(0, 200)}`);
+    }
   };
 
   // ─── Submit ──────────────────────────────────────────────────────────────
 
   const handleSubmit = async (): Promise<void> => {
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     setIsSubmitting(true);
     setMessage(null);
+    let documentStorage: IProjectDocumentStorage | null = null;
+    let cbsParseMessage = '';
+    let wbsParseMessage = '';
+    let cbsUploaded = false;
+    let wbsUploaded = false;
 
     try {
+      // ── Step 1: Save/update project record ──
       const resolvedProjectManagerId = await resolveProjectManagerId();
       setUploadProgress(editMode ? 'Updating project...' : 'Creating project...');
-      const projectUrl = `${pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('ENT_Project_Master')/items`;
-      const projectBody: Record<string, string | number | null> = {
-        Title: projectCode,
-        Project_Code: projectCode,
-        Project_Name: projectName,
-        Client_Name: clientName || null,
-        Contract_Value: contractValue ? parseFloat(contractValue) : null,
-        Project_Status: projectStatus,
-        Project_ManagerId: resolvedProjectManagerId ?? null,
-      };
 
+      const projectBaseUrl = `${pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('ENT_Project_Master')/items`;
+
+      const projectBody: Record<string, string | number> = {};
+
+      // Only include non-empty fields — SharePoint REST API returns 500
+      // when null is sent for Text, Currency, or User fields.
+      projectBody.Title = projectCode;
+      projectBody.Project_Code = projectCode;
+      projectBody.Project_Name = projectName;
+
+      if (clientName) projectBody.Client_Name = clientName;
+      if (contractValue) projectBody.Contract_Value = parseFloat(contractValue);
+      projectBody.Project_Status = projectStatus;
+      if (resolvedProjectManagerId != null) projectBody.Project_ManagerId = resolvedProjectManagerId;
       if (startDate) projectBody.Start_Date = startDate.toISOString();
       if (endDate) projectBody.End_Date = endDate.toISOString();
 
-      const itemUrl = editMode && editProject ? `${projectUrl}(${editProject.ID})` : projectUrl;
-      const projectResponse: SPHttpClientResponse = await spHttpClient.post(
-        itemUrl,
-        SPHttpClient.configurations.v1,
-        {
-          headers: editMode
-            ? {
-              'Accept': 'application/json',
-              'Content-Type': 'application/json',
-              'X-HTTP-Method': 'MERGE',
-              'If-Match': '*',
-            }
-            : {
-              'Accept': 'application/json;odata=nometadata',
-              'Content-Type': 'application/json;odata=nometadata',
-            },
-          body: JSON.stringify(projectBody),
-        }
-      );
+      const sharePointService = new SharePointService(spHttpClient, pageContext);
 
-      if (!projectResponse.ok) {
-        const errData = await projectResponse.text().catch(() => '');
-        throw new Error(`${editMode ? 'Failed to update project' : 'Failed to create project'}: ${projectResponse.status}${errData ? ' - ' + errData : ''}`);
+      // Proactively check for duplicate project code — SharePoint's
+      // SPDuplicateValuesFoundException returns a hard 500, so we
+      // catch it earlier with a friendly message.
+      if (!editMode) {
+        try {
+          const existing = await sharePointService.getListData(
+            'ENT_Project_Master',
+            `Project_Code eq '${projectCode.replace(/'/g, "''")}'`,
+            1
+          );
+          if (existing && existing.length > 0) {
+            setMessage({
+              type: MessageBarType.error,
+              text: `A project with code "${projectCode}" already exists. Each project must have a unique code. Please use a different Project Code.`,
+            });
+            setUploadProgress('');
+            setIsSubmitting(false);
+            return;
+          }
+        } catch {
+          // Silently continue — best-effort check; SharePoint will reject
+          // duplicates anyway.
+        }
       }
 
-      if (editMode) {
-        setUploadProgress('');
-        setMessage({ type: MessageBarType.success, text: 'Project updated successfully!' });
-        if (onProjectUpdated) {
-          const projectUpdateResult = onProjectUpdated();
-          if (projectUpdateResult) {
-            (projectUpdateResult as Promise<void>).catch((error) => {
-              console.error('Error notifying project update:', error);
-            });
+      let projectId: number;
+      if (editMode && editProject) {
+        await sharePointService.updateListItem('ENT_Project_Master', editProject.ID, projectBody);
+        projectId = editProject.ID;
+      } else {
+        const createdItem = await sharePointService.createListItem('ENT_Project_Master', projectBody);
+        projectId = createdItem.ID;
+      }
+
+      // ── Step 3: Prepare document storage if files need uploading ──
+      if (cbsFile || wbsFile) {
+        setUploadProgress('Preparing project document storage...');
+        documentStorage = await getProjectDocumentStorage(spHttpClient, pageContext, projectCode);
+      }
+
+      // ── Step 4: Process CBS file (upload + parse) ──
+      if (cbsFile && documentStorage) {
+        // Read buffer ONCE — reused for both upload and parsing (avoid double-read issue)
+        let cbsBuffer: ArrayBuffer;
+        try {
+          cbsBuffer = await cbsFile.arrayBuffer();
+        } catch {
+          setMessage({ type: MessageBarType.error, text: 'Failed to read CBS file. The file may be corrupted.' });
+          setUploadProgress('');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Check for duplicates in edit mode
+        if (editMode) {
+          const budgetExists = await checkBudgetDataExists();
+          if (budgetExists) {
+            // Duplicate check: warn user but still process as variation
+            console.log('[ProjectCreate] Budget data exists — processing as variation.');
           }
         }
-        setTimeout(() => {
-          resetForm();
-        }, 2000);
-        return;
-      }
 
-      const projectData = await projectResponse.json();
-      const projectId = projectData.ID || projectData.Id;
-      const projectDetails: IProjectCreateProjectDetails = {
-        projectId,
-        projectName,
-        projectCode,
-        projectManagerId,
-        projectManagerEmail: projectManagerEmail || projectManagerLoginName,
-      };
-
-      if (onProjectCreated) {
-        const projectCreationResult = onProjectCreated(projectDetails);
-        if (projectCreationResult) {
-          (projectCreationResult as Promise<void>).catch((error) => {
-            console.error('Error notifying project creation:', error);
-          });
-        }
-      }
-
-      let documentStorage: IProjectDocumentStorage | null = null;
-
-      if (cbsFile || wbsFile) {
-        try {
-          setUploadProgress('Preparing project document storage...');
-          documentStorage = await getProjectDocumentStorage(spHttpClient, pageContext, projectCode);
-        } catch (err) {
-          console.error('Error preparing project document storage:', err);
-          setMessage({
-            type: MessageBarType.warning,
-            text: `${editMode ? 'Project updated' : 'Project created and workspace provisioning started'}. Document storage setup failed. Please upload the CBS/WBS files manually to the project document library.`,
-          });
-          setUploadProgress('');
-          return;
-        }
-      }
-
-      if (cbsFile && documentStorage) {
         setUploadProgress('Uploading budget (CBS) file...');
         try {
-          await uploadProjectDocument(
-            spHttpClient,
-            pageContext,
-            cbsFile,
-            documentStorage.budgetFileName,
-            documentStorage.budgetFolderUrl
-          );
+          // Upload to: Documents/Budgets/{projectCode}/{projectCode}_CBS.xlsx
+          await uploadBufferToSharePoint(cbsBuffer, documentStorage.budgetFileName, documentStorage.budgetFolderUrl);
+          cbsUploaded = true;
         } catch (err) {
-          console.error('Error uploading CBS file:', err);
+          const errorDetail = err instanceof Error ? err.message : 'Unknown error';
           setMessage({
-            type: MessageBarType.warning,
-            text: `${editMode ? 'Project updated' : 'Project created and workspace provisioning started'}. CBS file upload failed. Please upload manually to ${getProjectDocumentDisplayPath('Budgets', sanitizeProjectCodeForStorage(projectCode), documentStorage.budgetFileName)}.`,
+            type: MessageBarType.error,
+            text: `Budget file upload failed: ${errorDetail}. Please ensure the Documents library and Budgets folder exist, then try again.`,
           });
           setUploadProgress('');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Parse immediately (using same buffer read before upload)
+        setUploadProgress('Parsing CBS budget data...');
+        try {
+          const importResult = await cbsImportService.importCbsFile({
+            fileName: documentStorage.budgetFileName,
+            projectCode,
+            fileBuffer: cbsBuffer,
+          });
+          setCbsImportResult(importResult);
+
+          if (importResult.success) {
+            cbsParseMessage = importResult.isVariation
+              ? `Budget variation applied: ${importResult.rowsCreated} created, ${importResult.rowsUpdated} updated`
+              : `Budget imported: ${importResult.rowsCreated} line items created`;
+          } else {
+            // Rollback: delete the uploaded file since parsing failed
+            await deleteUploadedFile(documentStorage.budgetFolderUrl, documentStorage.budgetFileName);
+            cbsUploaded = false;
+            const userMsg = `Budget file was uploaded but could not be parsed: ${importResult.summary}. The file has been removed. Please fix the file and try again.`;
+            setMessage({ type: MessageBarType.error, text: userMsg });
+            setUploadProgress('');
+            setIsSubmitting(false);
+            return;
+          }
+        } catch (err) {
+          // Parse threw an exception — rollback file
+          await deleteUploadedFile(documentStorage.budgetFolderUrl, documentStorage.budgetFileName);
+          cbsUploaded = false;
+          const errorDetail = err instanceof Error ? err.message : 'Unknown error';
+          setMessage({
+            type: MessageBarType.error,
+            text: `Budget parsing failed: ${errorDetail}. The file has been removed. Please fix the issue and try again.`,
+          });
+          setUploadProgress('');
+          setIsSubmitting(false);
           return;
         }
       }
 
+      // ── Step 5: Process WBS file (upload + parse) ──
       if (wbsFile && documentStorage) {
+        // Read buffer ONCE — reused for both upload and parsing
+        let wbsBuffer: ArrayBuffer;
+        try {
+          wbsBuffer = await wbsFile.arrayBuffer();
+        } catch {
+          setMessage({
+            type: MessageBarType.warning,
+            text: `${cbsParseMessage || 'Project created.'} Failed to read WBS file. The file may be corrupted. Go to Schedule tab to re-upload.`,
+          });
+          setUploadProgress('');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Check for duplicates in edit mode
+        if (editMode) {
+          const scheduleExists = await checkScheduleDataExists();
+          if (scheduleExists) {
+            console.log('[ProjectCreate] Schedule data exists — processing as update.');
+          }
+        }
+
         setUploadProgress('Uploading schedule (WBS) file...');
         try {
-          await uploadProjectDocument(
-            spHttpClient,
-            pageContext,
-            wbsFile,
-            documentStorage.wbsFileName,
-            documentStorage.wbsFolderUrl
-          );
+          // Upload to: Documents/Budgets/{projectCode}/{projectCode}_WBS.xlsx
+          await uploadBufferToSharePoint(wbsBuffer, documentStorage.wbsFileName, documentStorage.wbsFolderUrl);
+          wbsUploaded = true;
         } catch (err) {
-          console.error('Error uploading WBS file:', err);
+          const errorDetail = err instanceof Error ? err.message : 'Unknown error';
           setMessage({
             type: MessageBarType.warning,
-            text: `${editMode ? 'Project updated' : 'Project created'}. CBS file uploaded. WBS file upload failed. Please upload manually to ${getProjectDocumentDisplayPath('WBS', sanitizeProjectCodeForStorage(projectCode), documentStorage.wbsFileName)}.`,
+            text: `${cbsParseMessage || 'Budget imported.'} Schedule file upload failed: ${errorDetail}. Go to Schedule tab to re-upload.`,
           });
           setUploadProgress('');
+          setIsSubmitting(false);
+          return;
+        }
+
+        // Parse immediately (using same buffer)
+        setUploadProgress('Parsing WBS schedule data...');
+        try {
+          const wbsResult = await wbsImportService.importWbsFile({
+            fileName: documentStorage.wbsFileName,
+            projectCode,
+            fileBuffer: wbsBuffer,
+          });
+
+          if (wbsResult.success) {
+            wbsParseMessage = wbsResult.isUpdate
+              ? `Schedule update applied: ${wbsResult.rowsCreated} created, ${wbsResult.rowsUpdated} updated`
+              : `Schedule imported: ${wbsResult.rowsCreated} activities created`;
+          } else {
+            // Rollback WBS file only — CBS already succeeded
+            await deleteUploadedFile(documentStorage.wbsFolderUrl, documentStorage.wbsFileName);
+            wbsUploaded = false;
+            const wbsFailMsg = `Schedule file was uploaded but could not be parsed: ${wbsResult.summary}. The file has been removed. Go to Schedule tab to re-upload.`;
+            setMessage({ type: MessageBarType.warning, text: `${cbsParseMessage || 'Project updated.'} ${wbsFailMsg}` });
+            setUploadProgress('');
+            setIsSubmitting(false);
+            return;
+          }
+        } catch (err) {
+          if (wbsUploaded) {
+            await deleteUploadedFile(documentStorage.wbsFolderUrl, documentStorage.wbsFileName);
+            wbsUploaded = false;
+          }
+          const errorDetail = err instanceof Error ? err.message : 'Unknown error';
+          setMessage({
+            type: MessageBarType.warning,
+            text: `${cbsParseMessage || 'Budget imported.'} WBS parsing failed: ${errorDetail}. Go to Schedule tab to re-upload.`,
+          });
+          setUploadProgress('');
+          setIsSubmitting(false);
           return;
         }
       }
 
+      // ── Step 6: Success & provisioning ──
       setUploadProgress('');
+
+      // Fire-and-forget provisioning after both CBS and WBS succeed
+      if (webPartContext && cbsFile && wbsFile && cbsParseMessage && wbsParseMessage) {
+        // Don't await — let the UI respond immediately
+        const provisioningService = new ProjectProvisioningService(webPartContext);
+        provisioningService.provisionProjectWorkspace({
+          projectId,
+          projectName,
+          projectCode,
+          projectManagerEmail: projectManagerEmail || undefined,
+        }).catch((err: Error) => {
+          console.warn('[ProjectCreate] Provisioning background task:', err.message);
+        });
+      }
+
       const successPrefix = editMode ? 'Project updated successfully!' : 'Project created successfully!';
-      setMessage({
-        type: MessageBarType.success,
-        text: cbsFile && wbsFile
-          ? `${successPrefix} Budget and schedule files are stored in the project document library and will be processed automatically.`
-          : cbsFile
-            ? `${successPrefix} Budget file is stored in the project document library and will be processed automatically.`
-            : wbsFile
-              ? `${successPrefix} Schedule file is stored in the project document library and will be processed automatically.`
-              : successPrefix
-      });
-      setTimeout(() => {
-        resetForm();
-      }, 2000);
+      let successDetail = '';
+      if (cbsParseMessage) successDetail = cbsParseMessage;
+      if (wbsParseMessage) successDetail = successDetail ? `${successDetail} ${wbsParseMessage}` : wbsParseMessage;
+
+      // If edit mode with no file changes
+      if (!cbsFile && !wbsFile) {
+        setMessage({ type: MessageBarType.success, text: successPrefix });
+      } else {
+        setMessage({
+          type: MessageBarType.success,
+          text: successDetail ? `${successPrefix} ${successDetail}` : successPrefix,
+        });
+      }
+
+      setTimeout(() => { resetForm(); }, 4000);
     } catch (err) {
-      console.error('Error creating project:', err);
-      setMessage({ type: MessageBarType.error, text: err instanceof Error ? err.message : 'Failed to create project' });
+      console.error('Error in project submission:', err);
+      // Rollback any uploaded files
+      if (documentStorage) {
+        if (cbsUploaded) await deleteUploadedFile(documentStorage.budgetFolderUrl, documentStorage.budgetFileName);
+        if (wbsUploaded) await deleteUploadedFile(documentStorage.wbsFolderUrl, documentStorage.wbsFileName);
+      }
+      setMessage({ type: MessageBarType.error, text: err instanceof Error ? err.message : 'Failed to process project' });
       setUploadProgress('');
     } finally {
       setIsSubmitting(false);
@@ -583,7 +851,7 @@ const ProjectCreatePanel: React.FC<IProjectCreatePanelProps> = ({
           Budget & Schedule Upload
         </Text>
         <Text variant="small" styles={{ root: { color: '#6B7280' } }}>
-          Upload the CBS (budget) and WBS (schedule) Excel files. Files are stored under Documents/Budgets/{'ProjectCode'}/, then renamed to {'ProjectCode'}_CBS.xlsx and {'ProjectCode'}_WBS.xlsx. Power Automate will parse them into the project tracking lists.
+          Upload the CBS (budget) and WBS (schedule) Excel files. Files are stored under Documents/Budgets/{'ProjectCode'}/, then renamed to {'ProjectCode'}_CBS.xlsx and {'ProjectCode'}_WBS.xlsx. The CBS file is parsed immediately — no Power Automate needed.
         </Text>
 
         {/* CBS Upload */}
@@ -647,7 +915,7 @@ const ProjectCreatePanel: React.FC<IProjectCreatePanelProps> = ({
         </div>
 
         <MessageBar messageBarType={MessageBarType.info} styles={{ root: { borderRadius: '4px' } }}>
-          Files must use the Bonnedo Budget & Schedule Template (v2) with named Excel tables (CBS_Table, WBS_Table).
+          Files must use the Bonnedo Budget &amp; Schedule Template (v2) with named Excel tables (CBS_Table, WBS_Table). The CBS file is parsed immediately upon upload — no Power Automate required.
         </MessageBar>
       </Stack>
     </Panel>

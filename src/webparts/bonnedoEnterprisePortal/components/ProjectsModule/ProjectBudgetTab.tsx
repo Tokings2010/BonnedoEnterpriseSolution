@@ -14,6 +14,9 @@ import {
   Icon,
   CommandBar,
   ICommandBarItemProps,
+  PrimaryButton,
+  ProgressIndicator,
+  Link,
 } from '@fluentui/react';
 import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
@@ -25,6 +28,7 @@ import {
   IStoredProjectDocument,
   PROJECT_BUDGET_FOLDER_NAME,
 } from '../../services/ProjectDocumentStorageService';
+import { createCbsBudgetImportService, ICbsImportProgress, ICbsImportResult } from '../../services/CbsBudgetImportService';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -69,6 +73,8 @@ const getStyles = () =>
       display: 'flex',
       flexDirection: 'column' as const,
       gap: '16px',
+      overflow: 'auto',
+      height: '100%',
     },
     summaryRow: {
       display: 'flex',
@@ -161,6 +167,16 @@ const ProjectBudgetTab: React.FC<IProjectBudgetTabProps> = ({
   const [storedDocument, setStoredDocument] = React.useState<IStoredProjectDocument | undefined>(undefined);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+  const [importResult, setImportResult] = React.useState<ICbsImportResult | null>(null);
+  const [importProgress, setImportProgress] = React.useState<ICbsImportProgress | null>(null);
+  const [isImporting, setIsImporting] = React.useState(false);
+  const [importError, setImportError] = React.useState<string | null>(null);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const cbsService = React.useMemo(
+    () => createCbsBudgetImportService(spHttpClient, pageContext),
+    [spHttpClient, pageContext]
+  );
 
   // ─── Fetch Data ──────────────────────────────────────────────────────────
 
@@ -176,8 +192,11 @@ const ProjectBudgetTab: React.FC<IProjectBudgetTabProps> = ({
 
     try {
       const escapedProjectCode = projectCode.replace(/'/g, "''");
-      const filteredUrl = `${pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Project_Budget_Items')/items?$filter=Project_Code eq '${escapedProjectCode}'&$orderby=CBS_Code asc&$top=500`;
-      const fallbackUrl = `${pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Project_Budget_Items')/items?$top=5000`;
+      // Use a broader $select to handle potential field name mismatches
+      // and try the field name dynamically
+      const fieldSelect = 'ID,Project_Code,ProjectCode,CBS_Code,CBS_x0020_Code,Phase,Description,Title,UOM,Qty,Rate,Budget_Amount,Original_Budget,Actual_Amount,Variance_Budget,Remarks';
+      const filteredUrl = `${pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Project_Budget_Items')/items?$filter=Project_Code eq '${escapedProjectCode}'&$orderby=CBS_Code asc&$top=500&$select=${fieldSelect}`;
+      const fallbackUrl = `${pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Project_Budget_Items')/items?$top=5000&$select=${fieldSelect}`;
       let response: SPHttpClientResponse = await spHttpClient.get(
         filteredUrl,
         SPHttpClient.configurations.v1,
@@ -185,13 +204,22 @@ const ProjectBudgetTab: React.FC<IProjectBudgetTabProps> = ({
       );
 
       if (!response.ok) {
-        const fallbackResponse: SPHttpClientResponse = await spHttpClient.get(
-          fallbackUrl,
-          SPHttpClient.configurations.v1,
-          { headers: { 'Accept': 'application/json;odata=nometadata' } }
-        );
-        if (fallbackResponse.ok) {
-          response = fallbackResponse;
+        // Try with ProjectCode (no underscore) as the filter field
+        const altFilterUrl = `${pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Project_Budget_Items')/items?$filter=ProjectCode eq '${escapedProjectCode}'&$orderby=CBS_Code asc&$top=500&$select=${fieldSelect}`;
+        const altResp = await spHttpClient.get(altFilterUrl, SPHttpClient.configurations.v1, {
+          headers: { 'Accept': 'application/json;odata=nometadata' }
+        });
+        if (altResp.ok) {
+          response = altResp;
+        } else {
+          const fallbackResponse: SPHttpClientResponse = await spHttpClient.get(
+            fallbackUrl,
+            SPHttpClient.configurations.v1,
+            { headers: { 'Accept': 'application/json;odata=nometadata' } }
+          );
+          if (fallbackResponse.ok) {
+            response = fallbackResponse;
+          }
         }
       }
 
@@ -199,20 +227,23 @@ const ProjectBudgetTab: React.FC<IProjectBudgetTabProps> = ({
 
       const data = await response.json();
       const fetched: IBudgetItem[] = (data.value || [])
-        .filter((item: any) => String(item.Project_Code || '').trim() === projectCode.trim())
+        .filter((item: any) => {
+          const pc = String(item.Project_Code || item.ProjectCode || '').trim();
+          return pc === projectCode.trim();
+        })
         .map((item: any) => ({
         ID: item.ID,
-        Project_Code: item.Project_Code || '',
-        CBS_Code: item.CBS_Code || '',
+        Project_Code: item.Project_Code || item.ProjectCode || '',
+        CBS_Code: item.CBS_Code || item.CBS_x0020_Code || '',
         Phase: item.Phase || '',
         Description: item.Description || item.Title || '',
         UOM: item.UOM || '',
         Qty: item.Qty || 0,
         Rate: item.Rate || 0,
-        Budget_Amount: item.Budget_Amount || 0,
-        Original_Budget: item.Original_Budget || 0,
-        Actual_Amount: item.Actual_Amount || 0,
-        Variance_Budget: item.Variance_Budget || 0,
+        Budget_Amount: item.Budget_Amount || item.Budget_x0020_Amount || 0,
+        Original_Budget: item.Original_Budget || item.Original_x0020_Budget || 0,
+        Actual_Amount: item.Actual_Amount || item.Actual_x0020_Amount || 0,
+        Variance_Budget: item.Variance_Budget || item.Variance_x0020_Budget || 0,
         Remarks: item.Remarks || '',
       }));
 
@@ -254,6 +285,52 @@ const ProjectBudgetTab: React.FC<IProjectBudgetTabProps> = ({
     fetchStoredDocument().catch((error) => console.error('Error refreshing stored budget document:', error));
   }, [fetchBudgetItems, fetchStoredDocument]);
 
+  // ─── CBS File Import Handler ───────────────────────────────────────────────
+
+  const handleCbsFileImport = React.useCallback(async (file: File): Promise<void> => {
+    setImportError(null);
+    setImportResult(null);
+    setIsImporting(true);
+    setImportProgress({ step: 'start', message: 'Reading CBS file...', progress: 0, currentRow: 0, totalRows: 0 });
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const result = await cbsService.importCbsFile({
+        fileName: file.name,
+        projectCode,
+        fileBuffer: buffer,
+      }, (progress: ICbsImportProgress) => {
+        setImportProgress({ ...progress });
+      });
+
+      setImportResult(result);
+      if (result.success) {
+        // Refresh the budget items display after import
+        await fetchBudgetItems();
+        await fetchStoredDocument();
+        onRefresh();
+      }
+    } catch (err) {
+      setImportError(err instanceof Error ? err.message : 'Failed to import CBS file');
+    } finally {
+      setIsImporting(false);
+      setImportProgress(null);
+    }
+  }, [cbsService, projectCode, fetchBudgetItems, fetchStoredDocument, onRefresh]);
+
+  const handleImportButtonClick = (): void => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>): void => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleCbsFileImport(file).catch(console.error);
+    }
+    // Reset input so the same file can be re-selected
+    if (e.target) e.target.value = '';
+  };
+
   // ─── Calculations ────────────────────────────────────────────────────────
 
   const totalBudget = items.reduce((sum, i) => sum + i.Budget_Amount, 0);
@@ -283,6 +360,13 @@ const ProjectBudgetTab: React.FC<IProjectBudgetTabProps> = ({
 
   const commandBarItems: ICommandBarItemProps[] = [
     {
+      key: 'importCbs',
+      text: isImporting ? 'Importing...' : 'Import CBS',
+      iconProps: { iconName: 'ExcelDocument' },
+      disabled: !projectCode || isImporting,
+      onClick: handleImportButtonClick,
+    },
+    {
       key: 'refresh',
       text: 'Refresh',
       iconProps: { iconName: 'Refresh' },
@@ -292,6 +376,17 @@ const ProjectBudgetTab: React.FC<IProjectBudgetTabProps> = ({
       },
     },
   ];
+
+  // Hidden file input for CBS upload
+  const hiddenFileInput = (
+    <input
+      ref={fileInputRef}
+      type="file"
+      accept=".xlsx,.xls,.csv"
+      style={{ display: 'none' }}
+      onChange={handleFileSelected}
+    />
+  );
 
   // ─── Columns ─────────────────────────────────────────────────────────────
 
@@ -328,7 +423,7 @@ const ProjectBudgetTab: React.FC<IProjectBudgetTabProps> = ({
     return <MessageBar messageBarType={MessageBarType.error}>{error}</MessageBar>;
   }
 
-  if (items.length === 0) {
+  if (items.length === 0 && !importResult && !isImporting) {
     return (
       <Stack horizontalAlign="center" tokens={{ childrenGap: 12, padding: 40 }}>
         <Icon iconName="Money" styles={{ root: { fontSize: 48, color: '#D1D5DB' } }} />
@@ -338,14 +433,28 @@ const ProjectBudgetTab: React.FC<IProjectBudgetTabProps> = ({
             <Text variant="small" styles={{ root: { color: '#9CA3AF' } }}>
               Source file found at {getProjectDocumentDisplayPath(PROJECT_BUDGET_FOLDER_NAME, projectCode, storedDocument.name)}.
             </Text>
-            <Text variant="small" styles={{ root: { color: '#9CA3AF' } }}>
-              Parsed list data is not available yet. Refresh after the CBS processing flow completes.
-            </Text>
+            <PrimaryButton
+              text="Import CBS File"
+              iconProps={{ iconName: 'ExcelDocument' }}
+              onClick={handleImportButtonClick}
+              disabled={!projectCode}
+            />
+            {hiddenFileInput}
           </>
         ) : (
-          <Text variant="small" styles={{ root: { color: '#9CA3AF' } }}>
-            Upload a CBS file named {getProjectDocumentFileName(projectCode, 'budget')} to {getProjectDocumentDisplayPath(PROJECT_BUDGET_FOLDER_NAME, projectCode, getProjectDocumentFileName(projectCode, 'budget'))}.
-          </Text>
+          <>
+            <Text variant="small" styles={{ root: { color: '#9CA3AF' } }}>
+              Upload a CBS file named {getProjectDocumentFileName(projectCode, 'budget')} to{' '}
+              {getProjectDocumentDisplayPath(PROJECT_BUDGET_FOLDER_NAME, projectCode, getProjectDocumentFileName(projectCode, 'budget'))}.
+            </Text>
+            <PrimaryButton
+              text="Upload & Import CBS"
+              iconProps={{ iconName: 'ExcelDocument' }}
+              onClick={handleImportButtonClick}
+              disabled={!projectCode}
+            />
+            {hiddenFileInput}
+          </>
         )}
       </Stack>
     );
@@ -353,7 +462,60 @@ const ProjectBudgetTab: React.FC<IProjectBudgetTabProps> = ({
 
   return (
     <div className={styles.container}>
+      {/* Hidden file input */}
+      {hiddenFileInput}
+
       <CommandBar items={commandBarItems} />
+
+      {/* Import Progress */}
+      {isImporting && importProgress && (
+        <div style={{ padding: '12px 16px', backgroundColor: '#F0F6FF', borderRadius: '8px', border: '1px solid #B3D4FF' }}>
+          <Stack horizontal verticalAlign="center" tokens={{ childrenGap: 12 }}>
+            <Spinner size={SpinnerSize.small} />
+            <Text variant="small" styles={{ root: { color: '#1E2532', fontWeight: 500 } }}>
+              {importProgress.message}
+            </Text>
+          </Stack>
+          {importProgress.totalRows && importProgress.totalRows > 0 && (
+            <ProgressIndicator
+              percentComplete={importProgress.progress / 100}
+              barHeight={4}
+              styles={{ root: { marginTop: 8 } }}
+            />
+          )}
+        </div>
+      )}
+
+      {/* Import Result */}
+      {importResult && (
+        <MessageBar
+          messageBarType={importResult.success ? MessageBarType.success : MessageBarType.error}
+          isMultiline
+          onDismiss={() => setImportResult(null)}
+        >
+          <strong>{importResult.summary}</strong>
+          {importResult.details && importResult.details.length > 0 && (
+            <ul style={{ margin: '8px 0 0', paddingLeft: 20 }}>
+              {importResult.details.slice(0, 10).map((d, i) => (
+                <li key={i}>
+                  <strong>{d.cbsCode}</strong>: {d.action === 'created' ? '✅ Created' : d.action === 'updated' ? '🔄 Updated' : '⏭️ Skipped'}
+                  {d.reason ? ` — ${d.reason}` : ''}
+                </li>
+              ))}
+              {importResult.details.length > 10 && (
+                <li style={{ color: '#6B7280' }}>...and {importResult.details.length - 10} more rows</li>
+              )}
+            </ul>
+          )}
+        </MessageBar>
+      )}
+
+      {/* Import Error */}
+      {importError && (
+        <MessageBar messageBarType={MessageBarType.error} isMultiline onDismiss={() => setImportError(null)}>
+          {importError}
+        </MessageBar>
+      )}
 
       {/* Summary Cards */}
       <div className={styles.summaryRow}>

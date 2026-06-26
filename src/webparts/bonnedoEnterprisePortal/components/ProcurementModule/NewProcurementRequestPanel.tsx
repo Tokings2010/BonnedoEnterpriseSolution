@@ -24,6 +24,7 @@ import {
 } from '@fluentui/react';
 import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
+import { SharePointService } from '../../services/SharePointService';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -184,6 +185,11 @@ const NewProcurementRequestPanel: React.FC<INewProcurementRequestPanelProps> = (
 
   const classNames = getStyles() as unknown as { [key: string]: string };
 
+  const sharePointService = React.useMemo(
+    () => new SharePointService(spHttpClient, pageContext),
+    [spHttpClient, pageContext]
+  );
+
   // ─── Fetch Projects & Vendors ──────────────────────────────────────────────
 
   const fetchLookupData = React.useCallback(async (): Promise<void> => {
@@ -235,9 +241,21 @@ const NewProcurementRequestPanel: React.FC<INewProcurementRequestPanelProps> = (
   React.useEffect(() => {
     if (isOpen) {
       fetchLookupData().catch(() => undefined);
-      resetForm();
+      // Reset form via inline calls (avoids useCallback dependency issue)
+      setTitle('');
+      setProjectCode('');
+      setCategory('');
+      setRequiredDate(undefined);
+      setBudgetEstimate('');
+      setSourcingMethod('Competitive Bid');
+      setAssignedVendor('');
+      setJustification('');
+      setLineItems([
+        { id: '1', title: '', materialCode: '', quantity: '', uom: 'EA', specification: '', estimatedUnitPrice: '' },
+      ]);
+      setMessage(undefined);
     }
-  }, [isOpen, fetchLookupData, resetForm]);
+  }, [isOpen, fetchLookupData]);
 
   const addLineItem = (): void => {
     const newId = (lineItems.length + 1).toString();
@@ -318,12 +336,11 @@ const NewProcurementRequestPanel: React.FC<INewProcurementRequestPanelProps> = (
 
       const generatedRequestID = `${prefix}${nextNumber.toString().padStart(4, '0')}`;
 
-      // 2. Create the procurement request
-      const requestUrl = `${pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Procurement_Requests')/items`;
+      // 2. Create the procurement request using SharePointService (handles field aliases)
       const requestBody: Record<string, unknown> = {
         Title: title,
         RequestID: generatedRequestID,
-        Project_Code: projectCode || undefined,
+        Project_Code: projectCode || null,
         Request_Date: new Date().toISOString(),
         Required_Date: requiredDate.toISOString(),
         Sourcing_Method: sourcingMethod,
@@ -337,31 +354,14 @@ const NewProcurementRequestPanel: React.FC<INewProcurementRequestPanelProps> = (
         requestBody.Justification = justification;
       }
 
-      const requestResponse: SPHttpClientResponse = await spHttpClient.post(
-        requestUrl,
-        SPHttpClient.configurations.v1,
-        {
-          headers: {
-            'Accept': 'application/json;odata=nometadata',
-            'Content-Type': 'application/json;odata=nometadata',
-          },
-          body: JSON.stringify(requestBody),
-        }
-      );
+      await sharePointService.createListItem('Procurement_Requests', requestBody);
 
-      if (!requestResponse.ok) {
-        throw new Error(`Failed to create procurement request: ${requestResponse.status}`);
-      }
-
-      const requestID = generatedRequestID;
-
-      // 3. Create line items
+      // 3. Create line items using SharePointService
       const validLineItems = lineItems.filter((li) => li.title.trim());
       for (const lineItem of validLineItems) {
-        const itemUrl = `${pageContext.web.absoluteUrl}/_api/web/lists/getbytitle('Procurement_Request_Items')/items`;
         const itemBody: Record<string, unknown> = {
           Title: lineItem.title,
-          RequestID: requestID,
+          RequestID: generatedRequestID,
           Quantity: parseFloat(lineItem.quantity) || 0,
           UOM: lineItem.uom,
         };
@@ -370,17 +370,7 @@ const NewProcurementRequestPanel: React.FC<INewProcurementRequestPanelProps> = (
         if (lineItem.specification) itemBody.Specification = lineItem.specification;
         if (lineItem.estimatedUnitPrice) itemBody.Estimated_Unit_Price = parseFloat(lineItem.estimatedUnitPrice);
 
-        await spHttpClient.post(
-          itemUrl,
-          SPHttpClient.configurations.v1,
-          {
-            headers: {
-              'Accept': 'application/json;odata=nometadata',
-              'Content-Type': 'application/json;odata=nometadata',
-            },
-            body: JSON.stringify(itemBody),
-          }
-        );
+        await sharePointService.createListItem('Procurement_Request_Items', itemBody);
       }
 
       setMessage({ type: MessageBarType.success, text: 'Procurement request created successfully!' });

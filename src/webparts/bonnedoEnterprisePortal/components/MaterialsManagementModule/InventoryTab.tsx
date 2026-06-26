@@ -281,7 +281,7 @@ const InventoryTab: React.FC<IInventoryTabProps> = ({
   const totalItems = filteredItems.length;
   const totalQty = filteredItems.reduce((sum, item) => sum + item.QtyOnHand, 0);
   const warehouseCount = new Set(items.map((i) => i.Location).filter(Boolean)).size;
-  const lowStockCount = filteredItems.filter((item) => isLowStock(item.MaterialCode, item.QtyOnHand)).length;
+  const lowStockCount = filteredItems.filter((item: any) => isLowStock(item.Material_Code || item.MaterialCode, item.Qty_On_Hand || item.QtyOnHand)).length;
 
   const commandBarItems: ICommandBarItemProps[] = [
     {
@@ -391,20 +391,29 @@ const InventoryTab: React.FC<IInventoryTabProps> = ({
         <EnhancedDataGrid
           listName={SHAREPOINT_LISTS.INVENTORY_REGISTER}
           columns={[
-            { key: 'materialCode', name: 'Material Code', fieldName: 'MaterialCode', minWidth: 140,
-              onRender: (item: IInventoryItem) => <span style={{ fontWeight: 600, fontFamily: "'Cascadia Code','Fira Code',Consolas,monospace", fontSize: 13 }}>{item.MaterialCode}</span> },
-            { key: 'materialName', name: 'Material Name', fieldName: 'MaterialName', minWidth: 180 },
-            { key: 'location', name: 'Warehouse', fieldName: 'Location', minWidth: 90 },
-            { key: 'qtyOnHand', name: 'Qty On Hand', fieldName: 'QtyOnHand', minWidth: 90,
-              onRender: (item: IInventoryItem) => {
-                const low = isLowStock(item.MaterialCode, item.QtyOnHand);
-                return <span style={{ fontWeight: 600, color: low ? '#F39C12' : '#059669' }}>{item.QtyOnHand}{low ? ' ⚠' : ''}</span>;
+            { key: 'materialCode', name: 'Material Code', fieldName: 'Material_Code', minWidth: 140,
+              onRender: (item: any) => <span style={{ fontWeight: 600, fontFamily: "'Cascadia Code','Fira Code',Consolas,monospace", fontSize: 13 }}>{item.Material_Code || item.MaterialCode || '—'}</span> },
+            { key: 'project', name: 'Project Code', fieldName: 'Project_Code', minWidth: 100,
+              onRender: (item: any) => <span>{item.Project_Code || item.ProjectCode || '—'}</span> },
+            { key: 'location', name: 'Warehouse', fieldName: 'Location', minWidth: 100 },
+            { key: 'qtyOnHand', name: 'Qty On Hand', fieldName: 'Qty_On_Hand', minWidth: 100,
+              onRender: (item: any) => {
+                const code = item.Material_Code || item.MaterialCode;
+                const qty = item.Qty_On_Hand || item.QtyOnHand || 0;
+                const low = isLowStock(code, qty);
+                return <span style={{ fontWeight: 600, color: low ? '#F39C12' : '#107C10' }}>{qty}{low ? ' ⚠' : ''}</span>;
               }
             },
-            { key: 'qtyReserved', name: 'Reserved', fieldName: 'QtyReserved', minWidth: 70 },
-            { key: 'binLocation', name: 'Bin', fieldName: 'BinLocation', minWidth: 60 },
-            { key: 'condition', name: 'Condition', fieldName: 'Condition', minWidth: 80, onRender: (item: IInventoryItem) => <Tag text={item.Condition} /> },
-            { key: 'status', name: 'Status', fieldName: 'Status', minWidth: 80, onRender: (item: IInventoryItem) => <Tag text={item.Status} /> },
+            { key: 'qtyReserved', name: 'Reserved', fieldName: 'QtyReserved', minWidth: 80,
+              onRender: (item: any) => <span>{item.QtyReserved || 0}</span> },
+            { key: 'binLocation', name: 'Bin', fieldName: 'BinLocation', minWidth: 70,
+              onRender: (item: any) => <span>{item.BinLocation || '—'}</span> },
+            { key: 'batchNumber', name: 'Batch', fieldName: 'BatchNumber', minWidth: 80,
+              onRender: (item: any) => <span>{item.BatchNumber || '—'}</span> },
+            { key: 'condition', name: 'Condition', fieldName: 'Condition', minWidth: 80 },
+            { key: 'status', name: 'Status', fieldName: 'Status', minWidth: 80 },
+            { key: 'dateReceived', name: 'Date Received', fieldName: 'DateReceived', minWidth: 110,
+              onRender: (item: any) => item.DateReceived ? new Date(item.DateReceived).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—' },
           ]}
           spHttpClient={spHttpClient}
           pageContext={pageContext}

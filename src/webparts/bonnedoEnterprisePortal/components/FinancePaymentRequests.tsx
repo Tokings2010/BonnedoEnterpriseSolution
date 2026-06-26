@@ -371,7 +371,7 @@ const FinancePaymentRequests: React.FC<IFinancePaymentRequestsProps> = ({
                         <div style={{ marginTop: '16px', paddingTop: '16px', borderTop: `1px solid ${theme.palette.neutralLight}` }}>
                             <DefaultButton
                                 text="Track Approval"
-                                iconProps={{ iconName: 'CheckCircle' }}
+                                iconProps={{ iconName: 'CompletedSolid' }}
                                 onClick={openApprovalTracker}
                                 style={{ width: '100%' }}
                             />

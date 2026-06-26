@@ -50,6 +50,7 @@ const MaterialsModule: React.FC<IMaterialsModuleProps> = ({
   const [isDetailsPanelOpen, setIsDetailsPanelOpen] = React.useState(false);
   const [isFormPanelOpen, setIsFormPanelOpen] = React.useState(false);
   const [refreshKey, setRefreshKey] = React.useState(0);
+  const [panelKey, setPanelKey] = React.useState(0);
   const [isMobileView, setIsMobileView] = React.useState(window.innerWidth < 768);
 
     React.useEffect(() => {
@@ -229,12 +230,18 @@ const MaterialsModule: React.FC<IMaterialsModuleProps> = ({
 
   const handleRowSelected = (material: IMaterial): void => {
     setSelectedMaterial(material);
+    setPanelKey((k) => k + 1);
     setIsDetailsPanelOpen(true);
   };
 
   const handleFormSubmit = (): void => {
     setIsFormPanelOpen(false);
     handleRefresh();
+  };
+
+  const closeDetailsPanel = (): void => {
+    setSelectedMaterial(undefined);
+    setIsDetailsPanelOpen(false);
   };
 
     return (
@@ -283,9 +290,10 @@ const MaterialsModule: React.FC<IMaterialsModuleProps> = ({
 
             {/* Material Details Panel */}
             <MaterialDetailsPanel
+              key={panelKey}
               isOpen={isDetailsPanelOpen}
               material={selectedMaterial}
-              onDismiss={() => setIsDetailsPanelOpen(false)}
+              onDismiss={closeDetailsPanel}
               onRefresh={handleRefresh}
               spHttpClient={spHttpClient}
               pageContext={pageContext}

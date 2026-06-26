@@ -43,28 +43,23 @@ const ProcurementPerformanceChart: React.FC<IProcurementPerformanceChartProps> =
                     fetchListData(spHttpClient, webUrl, 'PRC_GRN_Register'),
                 ]);
 
-                // Calculate counts for each stage
+                // Calculate counts and real average days for each stage
+                const calcAvgDays = (items: any[]): number => {
+                    if (items.length === 0) return 0;
+                    const now = new Date();
+                    const totalDays = items.reduce((sum: number, item: any) => {
+                        const created = item.Created ? new Date(item.Created) : now;
+                        const diffMs = now.getTime() - created.getTime();
+                        return sum + Math.max(1, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+                    }, 0);
+                    return Math.round(totalDays / items.length);
+                };
+
                 const stages: IStageData[] = [
-                    {
-                        stage: 'Material Request',
-                        count: materialRequests.length,
-                        avgDays: Math.floor(Math.random() * 5) + 1, // Simulated avg days
-                    },
-                    {
-                        stage: 'Purchase Requisition',
-                        count: purchaseRequisitions.length,
-                        avgDays: Math.floor(Math.random() * 7) + 2,
-                    },
-                    {
-                        stage: 'Purchase Order',
-                        count: purchaseOrders.length,
-                        avgDays: Math.floor(Math.random() * 10) + 3,
-                    },
-                    {
-                        stage: 'Goods Received',
-                        count: grn.length,
-                        avgDays: Math.floor(Math.random() * 3) + 1,
-                    },
+                    { stage: 'Material Request', count: materialRequests.length, avgDays: calcAvgDays(materialRequests) },
+                    { stage: 'Purchase Requisition', count: purchaseRequisitions.length, avgDays: calcAvgDays(purchaseRequisitions) },
+                    { stage: 'Purchase Order', count: purchaseOrders.length, avgDays: calcAvgDays(purchaseOrders) },
+                    { stage: 'Goods Received', count: grn.length, avgDays: calcAvgDays(grn) },
                 ];
 
                 setStageData(stages);

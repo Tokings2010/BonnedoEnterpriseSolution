@@ -386,16 +386,23 @@ const MovementsTab: React.FC<IMovementsTabProps> = ({
         <EnhancedDataGrid
           listName={SHAREPOINT_LISTS.INVENTORY_MOVEMENTS_REGISTER}
           columns={[
-            { key: 'created', name: 'Date', fieldName: 'Created', minWidth: 120,
-              onRender: (item: IMovementItem) => item.Created ? new Date(item.Created).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—' },
-            { key: 'movementType', name: 'Type', fieldName: 'MovementType', minWidth: 110, onRender: (item: IMovementItem) => <Tag text={item.MovementType} /> },
-            { key: 'materialCode', name: 'Material Code', fieldName: 'MaterialCode', minWidth: 140,
-              onRender: (item: IMovementItem) => <span style={{ fontWeight: 600, fontFamily: "'Cascadia Code','Fira Code',Consolas,monospace", fontSize: 13 }}>{item.MaterialCode}</span> },
-            { key: 'materialName', name: 'Material Name', fieldName: 'MaterialName', minWidth: 180 },
-            { key: 'qty', name: 'Qty', fieldName: 'Qty', minWidth: 60, onRender: (item: IMovementItem) => <span style={{ fontWeight: 600 }}>{item.Qty}</span> },
-            { key: 'from', name: 'From', fieldName: 'FromLocation', minWidth: 100 },
-            { key: 'to', name: 'To', fieldName: 'ToLocation', minWidth: 100 },
-            { key: 'project', name: 'Project', fieldName: 'ProjectCode', minWidth: 120 },
+            { key: 'created', name: 'Date', fieldName: 'Created', minWidth: 130,
+              onRender: (item: any) => item.Created ? new Date(item.Created).toLocaleString('en-GB', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—' },
+            { key: 'refNo', name: 'Ref No', fieldName: 'Title', minWidth: 120,
+              onRender: (item: any) => <span style={{ fontWeight: 600 }}>{item.Title || item.Ref_x0020_No || '—'}</span> },
+            { key: 'movementType', name: 'Type', fieldName: 'Movement_Type', minWidth: 120,
+              onRender: (item: any) => <Tag text={item.Movement_Type || '—'} /> },
+            { key: 'materialCode', name: 'Material Code', fieldName: 'Material_Code', minWidth: 140,
+              onRender: (item: any) => <span style={{ fontWeight: 600, fontFamily: "'Cascadia Code','Fira Code',Consolas,monospace", fontSize: 13 }}>{item.Material_Code}</span> },
+            { key: 'qty', name: 'Qty', fieldName: 'Qty', minWidth: 70, onRender: (item: any) => <span style={{ fontWeight: 600 }}>{item.Qty}</span> },
+            { key: 'from', name: 'From', fieldName: 'From_Location', minWidth: 110,
+              onRender: (item: any) => <span>{item.From_Location || item.From_x0020_Location || '—'}</span> },
+            { key: 'to', name: 'To', fieldName: 'To_x0020_Location', minWidth: 110,
+              onRender: (item: any) => <span>{item.To_Location || item.To_x0020_Location || '—'}</span> },
+            { key: 'project', name: 'Project', fieldName: 'Project_Code', minWidth: 110,
+              onRender: (item: any) => <span>{item.Project_Code || '—'}</span> },
+            { key: 'note', name: 'Note', fieldName: 'Note', minWidth: 160,
+              onRender: (item: any) => <span style={{ color: '#616161' }}>{item.Note || '—'}</span> },
           ]}
           spHttpClient={spHttpClient}
           pageContext={pageContext}

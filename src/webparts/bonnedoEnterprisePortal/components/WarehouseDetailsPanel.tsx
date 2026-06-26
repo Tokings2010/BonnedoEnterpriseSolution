@@ -163,6 +163,38 @@ const WarehouseDetailsPanel: React.FC<IWarehouseDetailsPanelProps> = ({
             <div className={classNames.section}>
               <div className={classNames.buttonGroup}>
                 <PrimaryButton
+                  text="Print QR Label"
+                  onClick={() => {
+                    const code = warehouse.WarehouseCode;
+                    const name = warehouse.Warehouse_Name || 'Warehouse';
+                    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=240x240&data=${encodeURIComponent(code)}`;
+                    const w = window.open('', '_blank', 'width=400,height=500');
+                    if (w) {
+                      w.document.write(`
+                        <html><head><title>QR Label - ${code}</title>
+                        <style>
+                          body { text-align: center; font-family: 'Segoe UI', sans-serif; padding: 40px 20px; }
+                          .qr-image { width: 260px; height: 260px; margin: 20px auto; border: 1px solid #E1E1E1; padding: 16px; border-radius: 8px; }
+                          .qr-image img { width: 100%; height: 100%; object-fit: contain; }
+                          .code { font-size: 20px; font-weight: 700; font-family: 'Cascadia Code', monospace; margin: 12px 0; }
+                          .name { font-size: 14px; color: #616161; }
+                          @media print { @page { margin: 0; } body { padding: 20px; } }
+                        </style></head>
+                        <body>
+                          <h2 style="font-size:20px;margin-bottom:4px;">Bonnedo Enterprise</h2>
+                          <p style="color:#8A8A8A;margin-top:0;">Warehouse QR Label</p>
+                          <div class="qr-image"><img src="${qrUrl}" alt="QR Code" /></div>
+                          <div class="code">${code}</div>
+                          <div class="name">${name}</div>
+                        </body></html>
+                      `);
+                      w.document.close();
+                    }
+                  }}
+                  iconProps={{ iconName: 'QRCode' }}
+                  className={classNames.actionButton}
+                />
+                <PrimaryButton
                   text="Edit"
                   onClick={() => setIsEditMode(true)}
                   iconProps={{ iconName: 'Edit' }}

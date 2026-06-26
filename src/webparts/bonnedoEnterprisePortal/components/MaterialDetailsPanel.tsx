@@ -295,6 +295,48 @@ const MaterialDetailsPanel: React.FC<IMaterialDetailsPanelProps> = ({
 
               <div className={classNames.buttonGroup}>
                 <PrimaryButton
+                  text="Print QR Code"
+                  onClick={() => {
+                    const url = getHyperlinkUrl(material.QRCodeURL || material.qrcodeurl);
+                    if (url) {
+                      // Open QR image in print-friendly popup
+                      const w = window.open('', '_blank', 'width=400,height=500');
+                      if (w) {
+                        w.document.write(`
+                          <html><head><title>QR Code - ${material.Material_Code}</title>
+                          <style>
+                            body { text-align: center; font-family: 'Segoe UI', sans-serif; padding: 40px 20px; }
+                            .qr-image { width: 280px; height: 280px; margin: 20px auto; border: 1px solid #E1E1E1; padding: 16px; border-radius: 8px; }
+                            .qr-image img { width: 100%; height: 100%; object-fit: contain; }
+                            .code { font-size: 18px; font-weight: 700; font-family: 'Cascadia Code', monospace; margin: 12px 0; }
+                            .name { font-size: 14px; color: #616161; margin-bottom: 20px; }
+                            .detail { display: flex; justify-content: center; gap: 20px; font-size: 12px; color: #8A8A8A; margin-bottom: 24px; }
+                            .detail-item { text-align: center; }
+                            .detail-item strong { display: block; color: #242424; font-size: 14px; margin-top: 2px; }
+                            @media print { @page { margin: 0; } body { padding: 20px; } }
+                          </style></head>
+                          <body>
+                            <h2 style="font-size:20px;margin-bottom:4px;">Bonnedo Enterprise</h2>
+                            <p style="color:#8A8A8A;margin-top:0;">Material QR Code</p>
+                            <div class="qr-image"><img src="${url}" alt="QR Code" /></div>
+                            <div class="code">${material.Material_Code}</div>
+                            <div class="name">${material.Material_Name}</div>
+                            <div class="detail">
+                              <div class="detail-item">Category <strong>${material.Category || 'N/A'}</strong></div>
+                              <div class="detail-item">Size <strong>${material.Size || 'N/A'}</strong></div>
+                              <div class="detail-item">UOM <strong>${material.UOM || 'N/A'}</strong></div>
+                            </div>
+                            <p style="color:#B0B8C4;font-size:10px;margin-top:32px;">Scanned at: ${new Date().toLocaleString('en-GB')}</p>
+                          </body></html>
+                        `);
+                        w.document.close();
+                      }
+                    }
+                  }}
+                  iconProps={{ iconName: 'Print' }}
+                  className={classNames.actionButton}
+                />
+                <PrimaryButton
                   text="Edit"
                   onClick={handleEdit}
                   iconProps={{ iconName: 'Edit' }}

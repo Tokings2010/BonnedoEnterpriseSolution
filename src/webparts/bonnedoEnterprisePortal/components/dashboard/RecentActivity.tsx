@@ -148,51 +148,53 @@ const RecentActivity: React.FC<IRecentActivityProps> = ({
     }
 
     if (isMobileView) {
-        return React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '12px' } },
+        return React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '8px', maxHeight: '300px', overflowY: 'auto' } },
             activities.map((activity) =>
                 React.createElement('div', {
                     key: activity.id,
                     style: {
-                        padding: '12px',
+                        padding: '10px 12px',
                         backgroundColor: theme.palette.neutralLighterAlt,
                         borderRadius: '8px',
                         display: 'flex',
                         alignItems: 'center',
-                        gap: '12px',
+                        gap: '10px',
+                        borderLeft: `3px solid ${activity.statusColor}`,
                     }
                 },
                     React.createElement('div', {
                         style: {
-                            fontSize: '20px',
-                            width: '36px',
-                            height: '36px',
+                            fontSize: '18px',
+                            width: '32px',
+                            height: '32px',
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'center',
                             backgroundColor: theme.palette.white,
-                            borderRadius: '8px',
+                            borderRadius: '6px',
+                            flexShrink: 0,
                         }
                     }, activity.typeIcon),
-                    React.createElement('div', { style: { flex: 1 } },
+                    React.createElement('div', { style: { flex: 1, minWidth: 0 } },
                         React.createElement('div', {
-                            style: { display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }
+                            style: { display: 'flex', justifyContent: 'space-between', marginBottom: '2px' }
                         },
                             React.createElement('span', {
-                                style: { fontSize: '13px', fontWeight: 600, color: theme.palette.neutralPrimary }
+                                style: { fontSize: '12px', fontWeight: 600, color: theme.palette.neutralPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
                             }, activity.recordNumber),
                             React.createElement('span', {
                                 style: {
-                                    fontSize: '11px', fontWeight: 500, color: activity.statusColor,
+                                    fontSize: '10px', fontWeight: 500, color: activity.statusColor,
                                     backgroundColor: activity.statusColor + '20',
-                                    padding: '2px 8px', borderRadius: '10px',
+                                    padding: '2px 6px', borderRadius: '10px', flexShrink: 0, marginLeft: 6,
                                 }
                             }, activity.status)
                         ),
                         React.createElement('div', {
                             style: { display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: theme.palette.neutralSecondary }
                         },
-                            React.createElement('span', null, activity.project),
-                            React.createElement('span', null, formatDate(activity.createdDate))
+                            React.createElement('span', { style: { whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', flex: 1 } }, activity.project),
+                            React.createElement('span', { style: { flexShrink: 0, marginLeft: 8 } }, formatDate(activity.createdDate))
                         )
                     )
                 )
@@ -200,37 +202,53 @@ const RecentActivity: React.FC<IRecentActivityProps> = ({
         );
     }
 
-    return React.createElement('div', { style: { overflowX: 'auto' } },
-        React.createElement('table', { style: { width: '100%', borderCollapse: 'collapse', fontSize: '13px' } },
-            React.createElement('thead', null,
-                React.createElement('tr', { style: { borderBottom: `2px solid ${theme.palette.neutralLight}` } },
-                    React.createElement('th', { style: { textAlign: 'left', padding: '8px 12px', color: theme.palette.neutralSecondary, fontWeight: 500 } }, 'Type'),
-                    React.createElement('th', { style: { textAlign: 'left', padding: '8px 12px', color: theme.palette.neutralSecondary, fontWeight: 500 } }, 'Record #'),
-                    React.createElement('th', { style: { textAlign: 'left', padding: '8px 12px', color: theme.palette.neutralSecondary, fontWeight: 500 } }, 'Project'),
-                    React.createElement('th', { style: { textAlign: 'left', padding: '8px 12px', color: theme.palette.neutralSecondary, fontWeight: 500 } }, 'Status'),
-                    React.createElement('th', { style: { textAlign: 'right', padding: '8px 12px', color: theme.palette.neutralSecondary, fontWeight: 500 } }, 'Date')
-                )
-            ),
-            React.createElement('tbody', null,
-                activities.map((activity) =>
-                    React.createElement('tr', { key: activity.id, style: { borderBottom: `1px solid ${theme.palette.neutralLight}` } },
-                        React.createElement('td', { style: { padding: '10px 12px' } },
-                            React.createElement('span', { style: { marginRight: '8px' } }, activity.typeIcon),
-                            React.createElement('span', { style: { fontWeight: 500 } }, activity.type)
+    // Desktop: scrollable card layout (consistent, no table overflow)
+    return React.createElement('div', { style: { display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '320px', overflowY: 'auto' } },
+        activities.map((activity) =>
+            React.createElement('div', {
+                key: activity.id,
+                style: {
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    backgroundColor: theme.palette.neutralLighterAlt,
+                    borderLeft: `3px solid ${activity.statusColor}`,
+                    transition: 'background 0.15s ease',
+                    cursor: 'default',
+                }
+            },
+                React.createElement('div', {
+                    style: {
+                        fontSize: '18px',
+                        width: '36px', height: '36px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        backgroundColor: theme.palette.white,
+                        borderRadius: '8px',
+                        flexShrink: 0,
+                    }
+                }, activity.typeIcon),
+                React.createElement('div', { style: { flex: 1, minWidth: 0 } },
+                    React.createElement('div', { style: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' } },
+                        React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: 0 } },
+                            React.createElement('span', { style: { fontSize: '12px', fontWeight: 600, color: theme.palette.neutralSecondary, flexShrink: 0 } }, activity.type),
+                            React.createElement('span', { style: { fontSize: '12px', fontWeight: 600, color: theme.palette.neutralPrimary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' } }, activity.recordNumber),
                         ),
-                        React.createElement('td', { style: { padding: '10px 12px', fontWeight: 500, color: theme.palette.neutralPrimary } }, activity.recordNumber),
-                        React.createElement('td', { style: { padding: '10px 12px', color: theme.palette.neutralSecondary } }, activity.project),
-                        React.createElement('td', { style: { padding: '10px 12px' } },
+                        React.createElement('div', { style: { display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 } },
                             React.createElement('span', {
                                 style: {
-                                    fontSize: '11px', fontWeight: 500, color: activity.statusColor,
+                                    fontSize: '10px', fontWeight: 500, color: activity.statusColor,
                                     backgroundColor: activity.statusColor + '20',
                                     padding: '2px 8px', borderRadius: '10px',
                                 }
-                            }, activity.status)
-                        ),
-                        React.createElement('td', { style: { padding: '10px 12px', textAlign: 'right', color: theme.palette.neutralSecondary } }, formatDate(activity.createdDate))
-                    )
+                            }, activity.status),
+                            React.createElement('span', { style: { fontSize: '11px', color: theme.palette.neutralTertiary } }, formatDate(activity.createdDate)),
+                        )
+                    ),
+                    React.createElement('div', {
+                        style: { fontSize: '12px', color: theme.palette.neutralSecondary, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }
+                    }, activity.project !== '-' ? activity.project : 'No project')
                 )
             )
         )

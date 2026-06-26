@@ -25,6 +25,7 @@ import { createProjectProvisioningService, IProvisioningResult, IProvisioningPro
 import { createTaskRegisterService } from '../services/TaskRegisterService';
 import TaskForm from './TaskForm';
 import TaskDetailsPanel, { ITaskItem } from './TaskDetailsPanel';
+import ActivityProgressTab from './ActivityProgressTab';
 
 export interface IProjectsModuleProps {
   spHttpClient: SPHttpClient;
@@ -63,7 +64,7 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
   const [provisioningProgress, setProvisioningProgress] = React.useState<IProvisioningProgress | null>(null);
   const [isTaskFormOpen, setIsTaskFormOpen] = React.useState(false);
   const [taskInitialData, setTaskInitialData] = React.useState<any>(null);
-  const [selectedTab, setSelectedTab] = React.useState<'projects' | 'tasks' | 'schedule' | 'budget'>('projects');
+  const [selectedTab, setSelectedTab] = React.useState<'projects' | 'tasks' | 'schedule' | 'budget' | 'activity-progress'>('projects');
   const [selectedTask, setSelectedTask] = React.useState<ITaskItem | undefined>(undefined);
   const [isTaskDetailsPanelOpen, setIsTaskDetailsPanelOpen] = React.useState(false);
 
@@ -107,7 +108,7 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
       flex: 1,
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'hidden',
+      overflow: 'auto',
     },
 
     gridContainer: {
@@ -421,14 +422,14 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
         selectedKey={selectedTab}
         onLinkClick={(item) => {
           if (item?.props.itemKey) {
-            setSelectedTab(item.props.itemKey as 'projects' | 'tasks');
+            setSelectedTab(item.props.itemKey as 'projects' | 'tasks' | 'schedule' | 'budget' | 'activity-progress');
           }
         }}
         className={classNames.pivot || ''}
       >
         {/* Projects Tab */}
         <PivotItem headerText="Projects" itemKey="projects" style={{ flex: 1, overflow: 'hidden' }}>
-          <div style={{ height: '100%', overflow: 'hidden' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* Header Section */}
             <div className={classNames.header}>
               <div className={classNames.headerTitle}>
@@ -473,7 +474,7 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
 
         {/* Project Tasks Tab */}
         <PivotItem headerText="Project Tasks" itemKey="tasks" style={{ flex: 1, overflow: 'hidden' }}>
-          <div style={{ height: '100%', overflow: 'hidden' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             {/* Task Header */}
             <div className={classNames.header}>
               <div className={classNames.headerTitle}>
@@ -524,7 +525,7 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
         </PivotItem>
         {/* Project Schedule Tab */}
         <PivotItem headerText="Project Schedule" itemKey="schedule" style={{ flex: 1, overflow: 'hidden' }}>
-          <div style={{ height: '100%', overflow: 'hidden' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div className={classNames.header}>
               <div className={classNames.headerTitle}>
                 <Text variant="xxLarge" block style={{ fontWeight: 600, marginBottom: '4px' }}>
@@ -562,7 +563,7 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
 
         {/* Project Budget Tab */}
         <PivotItem headerText="Project Budget" itemKey="budget" style={{ flex: 1, overflow: 'hidden' }}>
-          <div style={{ height: '100%', overflow: 'hidden' }}>
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
             <div className={classNames.header}>
               <div className={classNames.headerTitle}>
                 <Text variant="xxLarge" block style={{ fontWeight: 600, marginBottom: '4px' }}>
@@ -593,6 +594,30 @@ const ProjectsModule: React.FC<IProjectsModuleProps> = ({
                 />
               ) : (
                 renderProjectSelectionState('Money', 'Select a project', 'Choose a project from the Projects tab to view its budget and CBS data.')
+              )}
+            </div>
+          </div>
+        </PivotItem>
+
+        {/* Activity Progress Tab */}
+        <PivotItem
+          headerText="Progress Update"
+          itemKey="activity-progress"
+          itemIcon="ProgressRingDots"
+          style={{ flex: 1, overflow: 'hidden' }}
+        >
+          <div style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+            <div className={classNames.gridContainer}>
+              {selectedProject?.Project_Code ? (
+                <ActivityProgressTab
+                  spHttpClient={spHttpClient}
+                  pageContext={pageContext}
+                  projectCode={selectedProject.Project_Code}
+                  isMobileView={isMobileView}
+                  onRefresh={handleRefresh}
+                />
+              ) : (
+                renderProjectSelectionState('ProgressRingDots', 'Select a project', 'Choose a project from the Projects tab to update WBS activity progress.')
               )}
             </div>
           </div>

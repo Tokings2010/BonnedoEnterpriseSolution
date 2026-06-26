@@ -39,6 +39,8 @@ export { default as ApprovalMatrixForm } from './ApprovalMatrixForm';
 export { default as UserRoleForm } from './UserRoleForm';
 export { default as DashboardModule } from './DashboardModule';
 export { default as ExecutiveDashboard } from './dashboard/ExecutiveDashboard';
+export { default as ActivityProgressTab } from './ActivityProgressTab';
+export { default as ProgressDashboardCard } from './ProgressDashboardCard';
 
 // Chart Components
 export { default as DashboardBarChart } from './charts/DashboardBarChart';
@@ -105,4 +107,6 @@ export { NotificationService } from '../services/NotificationService';
 export { PurchaseOrderPdfService } from '../services/PurchaseOrderPdfService';
 export { QRCodeService } from '../services/QRCodeService';
 export { PermissionService } from '../services/PermissionService';
+export { logCostTransaction } from '../services/CostLinkService';
+export type { ICostTransaction } from '../services/CostLinkService';
 export type { IListItem as ISharePointListItem, ISharePointListData } from '../services/SharePointService';

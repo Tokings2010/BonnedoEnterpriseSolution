@@ -24,6 +24,7 @@ import {
 import { SPHttpClient, SPHttpClientResponse } from '@microsoft/sp-http';
 import { PageContext } from '@microsoft/sp-page-context';
 import { IProcurementRequest } from './BidManagementTab';
+import { logCostTransaction } from '../../services/CostLinkService';
 
 // ─── Interfaces ──────────────────────────────────────────────────────────────
 
@@ -453,6 +454,22 @@ const BidDetailPanel: React.FC<IBidDetailPanelProps> = ({
             'X-HTTP-Method': 'MERGE',
           },
           body: JSON.stringify({ Status: 'Awarded', Assigned_Vendor: vendorName }),
+        });
+      }
+
+      // 4. Log cost transaction for the awarded bid
+      if (request) {
+        const awardedBid = bids.find((b) => b.ID === bidId);
+        await logCostTransaction(spHttpClient, pageContext, {
+          projectCode: request.Project_Code,
+          phase: '',
+          transactionType: 'PO Commitment',
+          amount: awardedBid?.Quote_Amount || 0,
+          vendorCode: awardedBid?.Vendor_Code || '',
+          vendorName: awardedBid?.Vendor_Name || vendorName,
+          referenceId: request.RequestID,
+          referenceType: 'Bid Award',
+          description: `Bid awarded for ${request.Title}`,
         });
       }
 

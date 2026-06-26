@@ -32,7 +32,14 @@ export class SharePointService {
   private readonly fieldNameAliases: Record<string, string[]> = {
     From_Location: ['From_Location', 'From_x0020_Location'],
     To_Location: ['To_Location', 'To_x0020_Location'],
-    Project_Code: ['Project_Code', 'Project_x0020_Code'],
+    Project_Code: ['Project_Code', 'ProjectCode', 'Project_x0020_Code', 'Project_x005f_Code', 'project_x005f_code'],
+    Project_Name: ['Project_Name', 'ProjectName', 'Project_x0020_Name', 'Project_x005f_Name'],
+    Project_Status: ['Project_Status', 'ProjectStatus', 'Project_x0020_Status', 'Project_x005f_Status'],
+    Project_ManagerId: ['Project_ManagerId', 'Project_x0020_ManagerId', 'ProjectManagerId', 'Project_x005f_ManagerId'],
+    Client_Name: ['Client_Name', 'ClientName', 'Client_x0020_Name', 'Client_x005f_Name'],
+    Contract_Value: ['Contract_Value', 'ContractValue', 'Contract_x0020_Value', 'Contract_x005f_Value'],
+    Start_Date: ['Start_Date', 'StartDate', 'Start_x0020_Date', 'Start_x005f_Date'],
+    End_Date: ['End_Date', 'EndDate', 'End_x0020_Date', 'End_x005f_Date'],
     Material_Code: ['Material_Code', 'Material_x0020_Code'],
     GRN_Number: ['GRN_Number', 'GRN_x0020_Number'],
     PO_Number: ['PO_Number', 'PO_x0020_Number'],
@@ -50,7 +57,9 @@ export class SharePointService {
     }
 
     const webUrl = this.pageContext.web.absoluteUrl;
-    const url = `${webUrl}/_api/web/lists/getByTitle('${listName}')/fields?$select=InternalName,Hidden&$filter=Hidden eq false`;
+    // Include ALL fields (including hidden) because User/Lookup ID fields
+    // (e.g. Project_ManagerId) are hidden but we need to send values for them.
+    const url = `${webUrl}/_api/web/lists/getByTitle('${listName}')/fields?$select=InternalName,Title`;
 
     const response: SPHttpClientResponse = await this.spHttpClient.get(
       url,

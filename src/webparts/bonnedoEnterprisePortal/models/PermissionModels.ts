@@ -27,7 +27,11 @@ export type FinanceSubModuleKey =
     | 'payment-requests'
     | 'approved-payments'
     | 'budget-tracking'
-    | 'expense-register';
+    | 'expense-register'
+    | 'cost-overview'
+    | 'po-tracker'
+    | 'cash-flow'
+    | 'accruals';
 
 // Submodule keys for Master Data
 export type MasterDataSubModuleKey =
@@ -278,6 +282,10 @@ export const MODULE_DEFINITIONS: IModuleDefinition[] = [
             { key: 'approved-payments', parentModule: 'finance', name: 'Approved Payments', description: 'View approved payments', requiredPermission: 'view' },
             { key: 'budget-tracking', parentModule: 'finance', name: 'Budget Tracking', description: 'Track budget utilization', requiredPermission: 'view' },
             { key: 'expense-register', parentModule: 'finance', name: 'Expense Register', description: 'Manage expense records', requiredPermission: 'create' },
+            { key: 'cost-overview', parentModule: 'finance', name: 'Cost Overview', description: 'Budget vs actual by phase', requiredPermission: 'view' },
+            { key: 'po-tracker', parentModule: 'finance', name: 'PO Tracker', description: 'Purchase order payment tracking', requiredPermission: 'view' },
+            { key: 'cash-flow', parentModule: 'finance', name: 'Cash Flow', description: 'Cash flow forecasting', requiredPermission: 'view' },
+            { key: 'accruals', parentModule: 'finance', name: 'Accruals', description: 'Cost accrual management', requiredPermission: 'view' },
         ],
     },
     {

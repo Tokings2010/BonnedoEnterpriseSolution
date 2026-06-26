@@ -10,6 +10,10 @@ import FinanceBudgetTracking from './FinanceBudgetTracking';
 import FinanceExpenseRegister from './FinanceExpenseRegister';
 import FinancePaymentForm from './FinancePaymentForm';
 import ExpenseForm from './ExpenseForm';
+import ProjectCostOverviewTab from './ProjectCostOverviewTab';
+import PurchaseOrderTrackerTab from './PurchaseOrderTrackerTab';
+import CashFlowForecastTab from './CashFlowForecastTab';
+import CostAccrualsTab from './CostAccrualsTab';
 
 export interface IFinanceModuleProps {
   spHttpClient: SPHttpClient;
@@ -146,6 +150,70 @@ const FinanceModule: React.FC<IFinanceModuleProps> = ({
               pageContext={pageContext}
               isMobileView={isMobileView}
               onNewExpense={() => setIsExpenseFormOpen(true)}
+              onRefresh={handleRefresh}
+            />
+          </div>
+        </PivotItem>
+
+        <PivotItem
+          itemKey="cost-overview"
+          headerText="Cost Overview"
+          itemIcon="StackedBarChart"
+        >
+          <div style={{ padding: '16px', height: '100%' }}>
+            <ProjectCostOverviewTab
+              key={`cost-overview-${refreshKey}`}
+              spHttpClient={spHttpClient}
+              pageContext={pageContext}
+              isMobileView={isMobileView}
+              onRefresh={handleRefresh}
+            />
+          </div>
+        </PivotItem>
+
+        <PivotItem
+          itemKey="po-tracker"
+          headerText="PO Tracker"
+          itemIcon="DeliveryTruck"
+        >
+          <div style={{ padding: '16px', height: '100%' }}>
+            <PurchaseOrderTrackerTab
+              key={`po-tracker-${refreshKey}`}
+              spHttpClient={spHttpClient}
+              pageContext={pageContext}
+              isMobileView={isMobileView}
+              onRefresh={handleRefresh}
+            />
+          </div>
+        </PivotItem>
+
+        <PivotItem
+          itemKey="cash-flow"
+          headerText="Cash Flow"
+          itemIcon="Timeline"
+        >
+          <div style={{ padding: '16px', height: '100%' }}>
+            <CashFlowForecastTab
+              key={`cash-flow-${refreshKey}`}
+              spHttpClient={spHttpClient}
+              pageContext={pageContext}
+              isMobileView={isMobileView}
+              onRefresh={handleRefresh}
+            />
+          </div>
+        </PivotItem>
+
+        <PivotItem
+          itemKey="accruals"
+          headerText="Accruals"
+          itemIcon="AccountActivity"
+        >
+          <div style={{ padding: '16px', height: '100%' }}>
+            <CostAccrualsTab
+              key={`accruals-${refreshKey}`}
+              spHttpClient={spHttpClient}
+              pageContext={pageContext}
+              isMobileView={isMobileView}
               onRefresh={handleRefresh}
             />
           </div>
